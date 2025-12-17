@@ -24,11 +24,11 @@ export class LocalStorageAdapter {
 
 // S3 adapter stub (config via env vars). Implemented as stub to keep build small; install @aws-sdk/client-s3 to enable.
 export class S3Adapter {
-  constructor(opts: any) {
+  constructor(_opts: any) {
     // placeholder
   }
 
-  async upload(file: any) {
+  async upload(_file: any) {
     throw new Error('S3Adapter not implemented. Install @aws-sdk/client-s3 and implement upload.')
   }
 }

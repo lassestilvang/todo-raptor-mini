@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import TaskList from '../../../../components/TaskList'
 
 type Props = { params: { listId: string } }
 

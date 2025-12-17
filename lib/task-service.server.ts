@@ -26,8 +26,44 @@ export async function createTask(payload: Partial<Task>): Promise<Task> {
     completed_at: payload.completedAt ?? null
   }
 
+  // If SQL.js raw conn available, insert using raw SQL for compatibility
+  // @ts-ignore - runtime global
+  const conn: any = (globalThis as any).__SQL_JS_CONN__ || null
+  if (conn) {
+    const title = row.title.replace(/'/g, "''")
+    const notes = row.notes ? `'${row.notes.replace(/'/g, "''")}'` : 'NULL'
+    const due = row.due_date ? `'${row.due_date}'` : 'NULL'
+    const recurrence = row.recurrence ? `'${row.recurrence.replace(/'/g, "''")}'` : 'NULL'
+    const completed = row.completed_at ? `'${row.completed_at}'` : 'NULL'
+    conn.exec(`INSERT INTO tasks (id, list_id, title, notes, status, priority, due_date, estimate_minutes, actual_minutes, recurrence, created_at, updated_at, completed_at) VALUES ('${id}', '${row.list_id}', '${title}', ${notes}, '${row.status}', ${row.priority}, ${due}, ${row.estimate_minutes}, ${row.actual_minutes}, ${recurrence}, '${row.created_at}', '${row.updated_at}', ${completed})`)
+    await logActivity('task', id, 'created', { title: row.title })
+    const t = conn.exec(`SELECT * FROM tasks WHERE id = '${id}'`)
+    const resultRow = t && t.length > 0 && t[0].values && t[0].values[0] ? t[0].values[0] : null
+    const mapped = resultRow ? {
+      id: resultRow[0],
+      listId: resultRow[1],
+      title: resultRow[2],
+      notes: resultRow[3],
+      dueDate: resultRow[6],
+      estimateMinutes: resultRow[7],
+      actualMinutes: resultRow[8],
+      recurrence: resultRow[9] ? JSON.parse(resultRow[9]) : null,
+      createdAt: resultRow[10],
+      updatedAt: resultRow[11],
+      completedAt: resultRow[12]
+    } : null
+    return mapped as any
+  }
+
   const _db = getDb()
-  await _db.insert(tasks).values(row)
+  const insertQuery: any = _db.insert(tasks).values(row)
+  // Some drivers (sql-js) return a query object that needs `.run()` to execute
+  if (insertQuery && typeof insertQuery.run === 'function') {
+    await insertQuery.run()
+  } else {
+    await insertQuery
+  }
+
   await logActivity('task', id, 'created', { title: row.title })
   const t = await _db.select().from(tasks).where(eq(tasks.id, id))
   const result = t[0]
@@ -49,8 +85,8 @@ export async function createTask(payload: Partial<Task>): Promise<Task> {
 
 export async function getTasks(): Promise<Task[]> {
   const _db = getDb()
-  const rows = await _db.select().from(tasks).limit(100)
-  return rows.map(r => ({
+  const rows = await _db.select().from(tasks).limit(100).all()
+  return rows.map((r: any) => ({
     id: r.id,
     listId: r.list_id,
     title: r.title,
@@ -68,7 +104,7 @@ export async function getTasks(): Promise<Task[]> {
 
 export async function getTaskById(id: string): Promise<Task | null> {
   const _db = getDb()
-  const rows = await _db.select().from(tasks).where(eq(tasks.id, id)).limit(1)
+  const rows = await _db.select().from(tasks).where(eq(tasks.id, id)).limit(1).all()
   const r = rows[0]
   if (!r) return null
   return {

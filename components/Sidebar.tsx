@@ -1,3 +1,5 @@
+"use client"
+
 import Link from 'next/link'
 
 const views = [
@@ -22,8 +24,9 @@ export default function Sidebar() {
       const res = await fetch('/api/stats')
       const data = await res.json()
       setOverdue(data.overdueCount)
-    } catch (e) {
+    } catch (_err) {
       // ignore
+      void _err
     }
   }
 

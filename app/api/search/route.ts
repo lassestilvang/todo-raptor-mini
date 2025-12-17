@@ -9,7 +9,7 @@ export async function GET(req: Request) {
   if (!q) return NextResponse.json({ results: [] })
   const _db = getDb()
   const rows = await _db.select().from(tasks).all()
-  const items = rows.map(r => ({ id: r.id, title: r.title, notes: r.notes }))
+  const items = rows.map((r: any) => ({ id: r.id, title: r.title, notes: r.notes }))
   const fuse = new Fuse(items, { keys: ['title', 'notes'], threshold: 0.3 })
   const results = fuse.search(q).map(r => r.item)
   return NextResponse.json({ results })

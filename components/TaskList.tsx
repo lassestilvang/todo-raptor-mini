@@ -1,6 +1,9 @@
+"use client"
+
 import React, { useEffect, useState } from 'react'
 import TaskItem from './TaskItem'
 import TaskForm from './TaskForm'
+import SearchBar from './SearchBar'
 
 export default function TaskList({ listId = 'inbox' }: { listId?: string }) {
   const [tasks, setTasks] = useState<any[]>([])
@@ -10,7 +13,7 @@ export default function TaskList({ listId = 'inbox' }: { listId?: string }) {
     setLoading(true)
     const res = await fetch('/api/tasks')
     const data = await res.json()
-    setTasks(data.tasks ?? data.tasks ?? data.tasks ?? data.tasks || data.tasks || data.tasks || data.tasks || [])
+    setTasks(data.tasks || [])
     setLoading(false)
   }
 
@@ -27,7 +30,8 @@ export default function TaskList({ listId = 'inbox' }: { listId?: string }) {
       const Fuse = require('fuse.js')
       const fuse = new Fuse(tasks, { keys: ['title', 'notes'], threshold: 0.3 })
       return fuse.search(query).map((r: any) => r.item)
-    } catch (e) {
+    } catch (_err) {
+      void _err
       return tasks.filter(t => t.title.toLowerCase().includes(query.toLowerCase()))
     }
   }, [tasks, query])
@@ -44,7 +48,7 @@ export default function TaskList({ listId = 'inbox' }: { listId?: string }) {
 
       <div className="mt-4 space-y-2">
         {loading ? <div className="text-muted-foreground">Loading...</div> : null}
-        {filtered.map(t => (
+        {filtered.map((t: any) => (
           <TaskItem key={t.id} task={t} />
         ))}
         {filtered.length === 0 && !loading ? <div className="text-muted-foreground">No tasks</div> : null}

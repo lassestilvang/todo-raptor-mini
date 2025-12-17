@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 
-const schema = z.object({ title: z.string().min(1), notes: z.string().optional() })
+const schema = z.object({ title: z.string().min(1), notes: z.string().optional(), listId: z.string().optional(), labels: z.any().optional() })
 type FormData = z.infer<typeof schema>
 
 export default function TaskForm({ onCreate, initialListId }: { onCreate?: () => void; initialListId?: string }) {

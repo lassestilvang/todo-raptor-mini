@@ -1,4 +1,4 @@
-import { addDays, addWeeks, addMonths, addYears, isAfter } from 'date-fns'
+import { addDays, addWeeks, addMonths, addYears } from 'date-fns'
 
 export type Recurrence = { type: 'none' | 'daily' | 'weekly' | 'weekday' | 'monthly' | 'yearly'; interval?: number }
 

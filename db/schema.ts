@@ -1,13 +1,13 @@
-import { sqliteTable, text, integer, boolean, timestamp, json } from 'drizzle-orm/sqlite-core'
+import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core'
 
 export const lists = sqliteTable('lists', {
   id: text('id').primaryKey(),
   title: text('title').notNull(),
   color: text('color'),
   emoji: text('emoji'),
-  archived: boolean('archived').default(false),
-  created_at: timestamp('created_at').defaultNow(),
-  updated_at: timestamp('updated_at').defaultNow()
+  archived: integer('archived').default(0),
+  created_at: text('created_at').default(''),
+  updated_at: text('updated_at').default('')
 })
 
 export const tasks = sqliteTable('tasks', {
@@ -17,23 +17,23 @@ export const tasks = sqliteTable('tasks', {
   notes: text('notes'),
   status: text('status').default('todo'),
   priority: integer('priority').default(0),
-  due_date: timestamp('due_date'),
+  due_date: text('due_date'),
   estimate_minutes: integer('estimate_minutes').default(0),
   actual_minutes: integer('actual_minutes').default(0),
-  recurrence: json('recurrence'),
-  created_at: timestamp('created_at').defaultNow(),
-  updated_at: timestamp('updated_at').defaultNow(),
-  completed_at: timestamp('completed_at')
+  recurrence: text('recurrence'),
+  created_at: text('created_at').default(''),
+  updated_at: text('updated_at').default(''),
+  completed_at: text('completed_at')
 })
 
 export const subtasks = sqliteTable('subtasks', {
   id: text('id').primaryKey(),
   task_id: text('task_id').references(() => tasks.id),
   title: text('title').notNull(),
-  done: boolean('done').default(false),
+  done: integer('done').default(0),
   position: integer('position').default(0),
-  created_at: timestamp('created_at').defaultNow(),
-  updated_at: timestamp('updated_at').defaultNow()
+  created_at: text('created_at').default(''),
+  updated_at: text('updated_at').default('')
 })
 
 export const labels = sqliteTable('labels', {
@@ -55,7 +55,7 @@ export const attachments = sqliteTable('attachments', {
   size: integer('size'),
   mime: text('mime'),
   storage_key: text('storage_key'),
-  created_at: timestamp('created_at').defaultNow()
+  created_at: text('created_at').default('')
 })
 
 export const activity_log = sqliteTable('activity_log', {
@@ -63,7 +63,7 @@ export const activity_log = sqliteTable('activity_log', {
   entity_type: text('entity_type'),
   entity_id: text('entity_id'),
   action: text('action'),
-  payload: json('payload'),
+  payload: text('payload'),
   performed_by: text('performed_by'),
-  created_at: timestamp('created_at').defaultNow()
+  created_at: text('created_at').default('')
 })

@@ -19,7 +19,7 @@ jobs:
         run: bun install
       - name: Lint
         run: bun run lint
-      - name: Run tests
+      - name: Run tests (Bun)
         run: bun test
       - name: Run Playwright
         uses: microsoft/playwright-github-action@v1
@@ -39,3 +39,18 @@ jobs:
         with:
           name: coverage
           path: coverage || ''
+
+  node-init:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install deps (npm)
+        run: npm ci
+      - name: Run Node init script
+        run: node scripts/init-db.node.js
+      - name: Run Node init test
+        run: node tests/init-db.node.test.js

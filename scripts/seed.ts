@@ -2,7 +2,7 @@
 import fs from 'fs'
 import path from 'path'
 import { initDb } from '../lib/db'
-import { v4 as uuidv4 } from 'uuid'
+
 
 const conn = new (require('better-sqlite3'))(':memory:')
 const migrationsSql = fs.readFileSync(path.join(process.cwd(), 'db', 'migrations', '001_initial.sql'), 'utf8')

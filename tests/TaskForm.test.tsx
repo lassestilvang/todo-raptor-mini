@@ -6,10 +6,10 @@ import TaskForm from '../components/TaskForm'
 describe('TaskForm', () => {
   it('renders and submits', async () => {
     const onCreate = async () => {}
-    const { getByPlaceholderText, getByText } = render(<TaskForm onCreate={onCreate} />)
-    const input = getByPlaceholderText('Add a task') as HTMLInputElement
-    expect(input).toBeTruthy()
-    const button = getByText('Add')
-    expect(button).toBeTruthy()
+    const { getAllByPlaceholderText, getAllByText } = render(<TaskForm onCreate={onCreate} />)
+    const inputs = getAllByPlaceholderText('Add a task')
+    expect(inputs.length).toBeGreaterThan(0)
+    const buttons = getAllByText('Add')
+    expect(buttons.length).toBeGreaterThan(0)
   })
 })

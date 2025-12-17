@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'bun:test'
-import { nextOccurrence, nextOccurrencesAfter } from '../lib/recurrence-service.server'
+import { nextOccurrence } from '../lib/recurrence-service.server'
 
 describe('recurrence', () => {
   it('daily next occurrence', () => {
