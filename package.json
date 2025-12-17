@@ -1,0 +1,53 @@
+{
+  "name": "todo-raptor-mini",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "bun run next dev",
+    "build": "bun run next build",
+    "start": "bun run next start",
+    "lint": "eslint . --ext .ts,.tsx --fix",
+    "format": "prettier --write .",
+    "test": "bun test",
+    "test:unit": "bun test",
+    "test:e2e": "playwright test",
+    "e2e": "playwright test",
+    "ci": "bun install && bun test && npx playwright test",
+    "migrate": "drizzle-kit migrate",
+    "seed": "bun run scripts/seed.ts",
+    "prepare": "husky install"
+  },
+  "dependencies": {
+    "next": "16.0.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "tailwindcss": "^3.4.7",
+    "framer-motion": "^8.0.0",
+    "clsx": "^1.2.1",
+    "date-fns": "^2.30.0",
+    "react-hook-form": "^7.45.0",
+    "zod": "^3.22.0",
+    "fuse.js": "^6.6.2",
+    "drizzle-orm": "^0.27.0",
+    "better-sqlite3": "^8.0.0",
+    "uuid": "^9.0.0",
+    "@hookform/resolvers": "^3.1.0"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.30.0",
+    "typescript": "^5.2.0",
+    "lint-staged": "^13.0.0",
+    "eslint": "^8.0.0",
+    "prettier": "^2.8.0",
+    "husky": "^8.0.0",
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.2.0",
+    "@testing-library/react": "^14.0.0",
+    "@playwright/test": "^1.41.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix"
+    ]
+  }
+}

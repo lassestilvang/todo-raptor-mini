@@ -1,0 +1,6 @@
+name = "todo-raptor-mini"
+version = "0.1.0"
+
+[install]
+# Use exact versions in CI to ensure reproducible installs
+lockfile = "bun.lockb"
