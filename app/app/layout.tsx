@@ -1,12 +1,13 @@
-import React from 'react'
+import React from 'react';
+import Sidebar from '../../components/Sidebar';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  // Minimal layout used during build isolation
   return (
-    <div className="min-h-screen flex bg-slate-900 text-white">
-      <div className="flex-1 flex flex-col">
-        <main className="p-6">{children}</main>
-      </div>
+    <div className="min-h-screen flex bg-slate-50 dark:bg-slate-900 text-black dark:text-white">
+      <aside className="w-72 p-6 border-r border-slate-200 dark:border-slate-800">
+        <Sidebar />
+      </aside>
+      <main className="flex-1 p-6">{children}</main>
     </div>
-  )
+  );
 }

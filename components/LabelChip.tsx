@@ -1,5 +1,5 @@
-'use client'
-import React from 'react'
+'use client';
+import React from 'react';
 
 export default function LabelChip({ label }: { label: any }) {
   return (
@@ -7,5 +7,5 @@ export default function LabelChip({ label }: { label: any }) {
       {label.icon ? <span>{label.icon}</span> : null}
       <span>{label.name}</span>
     </span>
-  )
+  );
 }

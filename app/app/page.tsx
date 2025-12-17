@@ -1,4 +1,4 @@
-import TaskList from '../../components/TaskList'
+import TaskList from '../../components/TaskList';
 
 export default function Dashboard() {
   return (
@@ -9,5 +9,5 @@ export default function Dashboard() {
         <TaskList />
       </div>
     </div>
-  )
+  );
 }

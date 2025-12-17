@@ -9,7 +9,7 @@ Quick start
 3. Initialize DB (apply migrations):
    - With Bun (requires `sql.js` to be installed): `bun run scripts/init-db.ts`
    - With Node (recommended for native `better-sqlite3`): `node scripts/init-db.node.js`
-   If you run into native binding issues with `better-sqlite3` on Bun, install `sql.js` (`bun add sql.js`) so the Bun script can use the sql.js fallback.
+     If you run into native binding issues with `better-sqlite3` on Bun, install `sql.js` (`bun add sql.js`) so the Bun script can use the sql.js fallback.
 4. Seed sample data (optional): `bun run seed`
 5. Run dev server: `bun run next dev`
 6. Run unit tests: `bun test`

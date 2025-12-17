@@ -1,10 +1,10 @@
-import './globals.css'
-import { PropsWithChildren } from 'react'
+import './globals.css';
+import { PropsWithChildren } from 'react';
 
 export const metadata = {
   title: 'Todo Raptor',
-  description: 'Daily task planner'
-}
+  description: 'Daily task planner',
+};
 
 export default function RootLayout({ children }: PropsWithChildren) {
   return (
@@ -13,5 +13,5 @@ export default function RootLayout({ children }: PropsWithChildren) {
         {children}
       </body>
     </html>
-  )
+  );
 }

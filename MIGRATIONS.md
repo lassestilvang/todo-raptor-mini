@@ -13,5 +13,6 @@ Using drizzle-kit (dev):
 - Apply migrations in CI using `drizzle-kit migrate` or the `scripts/init-db.ts` helper for SQLite
 
 Notes:
+
 - For SQLite, the DB file is `db/data.db` by default (see `.env.example`).
 - For production, prefer PostgreSQL and adapt `drizzle.config.ts` accordingly.

@@ -1,40 +1,40 @@
-"use client"
+'use client';
 
-import React, { useEffect, useState } from 'react'
-import TaskItem from './TaskItem'
-import TaskForm from './TaskForm'
-import SearchBar from './SearchBar'
+import React, { useEffect, useState } from 'react';
+import TaskItem from './TaskItem';
+import TaskForm from './TaskForm';
+import SearchBar from './SearchBar';
 
 export default function TaskList({ listId = 'inbox' }: { listId?: string }) {
-  const [tasks, setTasks] = useState<any[]>([])
-  const [loading, setLoading] = useState(false)
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
   async function fetchTasks() {
-    setLoading(true)
-    const res = await fetch('/api/tasks')
-    const data = await res.json()
-    setTasks(data.tasks || [])
-    setLoading(false)
+    setLoading(true);
+    const res = await fetch('/api/tasks');
+    const data = await res.json();
+    setTasks(data.tasks || []);
+    setLoading(false);
   }
 
-  const [query, setQuery] = useState('')
+  const [query, setQuery] = useState('');
 
   useEffect(() => {
-    fetchTasks()
-  }, [listId])
+    fetchTasks();
+  }, [listId]);
 
   const filtered = React.useMemo(() => {
-    if (!query) return tasks
+    if (!query) return tasks;
     try {
       // lazy import fuse to keep bundle light
-      const Fuse = require('fuse.js')
-      const fuse = new Fuse(tasks, { keys: ['title', 'notes'], threshold: 0.3 })
-      return fuse.search(query).map((r: any) => r.item)
+      const Fuse = require('fuse.js');
+      const fuse = new Fuse(tasks, { keys: ['title', 'notes'], threshold: 0.3 });
+      return fuse.search(query).map((r: any) => r.item);
     } catch (_err) {
-      void _err
-      return tasks.filter(t => t.title.toLowerCase().includes(query.toLowerCase()))
+      void _err;
+      return tasks.filter((t) => t.title.toLowerCase().includes(query.toLowerCase()));
     }
-  }, [tasks, query])
+  }, [tasks, query]);
 
   return (
     <div>
@@ -51,8 +51,10 @@ export default function TaskList({ listId = 'inbox' }: { listId?: string }) {
         {filtered.map((t: any) => (
           <TaskItem key={t.id} task={t} />
         ))}
-        {filtered.length === 0 && !loading ? <div className="text-muted-foreground">No tasks</div> : null}
+        {filtered.length === 0 && !loading ? (
+          <div className="text-muted-foreground">No tasks</div>
+        ) : null}
       </div>
     </div>
-  )
+  );
 }

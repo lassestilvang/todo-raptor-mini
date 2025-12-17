@@ -1,18 +1,14 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: [
-    './app/**/*.{ts,tsx,js,jsx}',
-    './components/**/*.{ts,tsx,js,jsx}',
-    './src/**/*.{ts,tsx,js,jsx}'
-  ],
+  content: ['./app/**/*.{js,ts,jsx,tsx}', './components/**/*.{js,ts,jsx,tsx}'],
   darkMode: 'media',
   theme: {
     extend: {
       colors: {
         background: 'var(--color-background)',
-        foreground: 'var(--color-foreground)'
-      }
-    }
+        foreground: 'var(--color-foreground)',
+      },
+    },
   },
   plugins: [require('@tailwindcss/forms')],
-}
+};

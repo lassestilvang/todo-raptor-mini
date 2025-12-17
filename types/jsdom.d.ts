@@ -1,3 +1,3 @@
 declare module 'jsdom' {
-  export const JSDOM: any
+  export const JSDOM: any;
 }
