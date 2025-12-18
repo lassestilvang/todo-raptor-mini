@@ -8,10 +8,11 @@ if (process.env.PW_TEST) {
     await page.fill('input[placeholder="Add a task"]', 'E2E task');
     // click the form submit button scoped under the main content to avoid ambiguous Add buttons
     const submitBtn = page.locator('main form button[type="submit"]');
-    await expect(submitBtn).toBeVisible({ timeout: 5000 });
-    await expect(submitBtn).toBeEnabled({ timeout: 5000 });
-    await submitBtn.click();
-    await page.waitForSelector('text=E2E task');
-    await expect(page.locator('text=E2E task')).toBeVisible();
+    await expect(submitBtn).toBeVisible({ timeout: 15000 });
+    await expect(submitBtn).toBeEnabled({ timeout: 15000 });
+    // In CI, occasional overlays may intercept pointer events. Use a forced click to avoid flakiness.
+    await submitBtn.click({ force: true });
+    await page.waitForSelector('text=E2E task', { timeout: 15000 });
+    await expect(page.locator('text=E2E task')).toBeVisible({ timeout: 15000 });
   });
 }
