@@ -68,13 +68,24 @@ if (typeof globalThis.window === 'undefined' || typeof globalThis.document === '
   };
 
   // Cleanup DOM between tests to avoid leaking elements across renders
-  // Note: bun:test exposes beforeEach/afterEach globally
-  // @ts-ignore - register beforeEach in test environment
-  beforeEach(() => {
-    document.body.innerHTML = '';
-  });
-  // @ts-ignore - register afterEach in test environment
-  afterEach(() => {
-    document.body.innerHTML = '';
-  });
+  // Note: test runners expose beforeEach/afterEach globally; guard in case they are not available
+  try {
+    // @ts-ignore - register beforeEach in test environment if available
+    if (typeof (globalThis as any).beforeEach === 'function') {
+      // @ts-ignore
+      beforeEach(() => {
+        document.body.innerHTML = '';
+      });
+    }
+    // @ts-ignore - register afterEach in test environment if available
+    if (typeof (globalThis as any).afterEach === 'function') {
+      // @ts-ignore
+      afterEach(() => {
+        document.body.innerHTML = '';
+      });
+    }
+  } catch (_err) {
+    // If the test framework doesn't expose lifecycle hooks in this environment, skip cleanup.
+    void _err;
+  }
 }
