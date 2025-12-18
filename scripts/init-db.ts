@@ -67,7 +67,7 @@ export async function initDb(options?: { dbPath?: string; migrationsDir?: string
 }
 
 // If script is executed directly, run init and exit with appropriate code
-if (require.main === module) {
+if (typeof require !== 'undefined' && typeof module !== 'undefined' && require.main === module) {
   initDb()
     .then(() => process.exit(0))
     .catch((e) => {

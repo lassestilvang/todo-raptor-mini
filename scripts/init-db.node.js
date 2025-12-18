@@ -24,6 +24,19 @@ function init() {
       db.exec(sql);
       console.log('Applied', file);
     }
+    // Seed sample data if none exist
+    try {
+      const count = db.prepare("SELECT COUNT(*) as c FROM tasks").get();
+      if (!count || count.c === 0) {
+        console.log('Seeding sample data into DB');
+        db.prepare("INSERT OR IGNORE INTO lists (id,title,emoji,color) VALUES ('inbox','Inbox','📥','#64748b')").run();
+        db.prepare("INSERT OR IGNORE INTO lists (id,title,emoji,color) VALUES ('work','Work','💼','#7c3aed')").run();
+        db.prepare("INSERT INTO tasks (id,list_id,title,notes) VALUES ('welcome','inbox','Welcome to Todo Raptor','This is your inbox task. Edit or delete it.')").run();
+        db.prepare("INSERT INTO tasks (id,list_id,title,notes) VALUES ('plan','work','Plan project','Create milestones and schedule user interviews.')").run();
+      }
+    } catch (e) {
+      console.warn('Seeding skipped or failed:', e && e.message ? e.message : e);
+    }
     console.log('DB initialized');
     return { used: 'better-sqlite3', dbPath };
   } catch (err) {
@@ -47,6 +60,20 @@ function init() {
           const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
           conn.exec(sql);
           console.log('Applied', file);
+        }
+        // Seed sample data if none exists
+        try {
+          const t = conn.exec("SELECT COUNT(*) as c FROM tasks");
+          const count = (t && t[0] && t[0].values && t[0].values[0] && t[0].values[0][0]) || 0;
+          if (!count) {
+            console.log('Seeding sample data into DB (sql.js)');
+            conn.exec("INSERT OR IGNORE INTO lists (id,title,emoji,color) VALUES ('inbox','Inbox','📥','#64748b');");
+            conn.exec("INSERT OR IGNORE INTO lists (id,title,emoji,color) VALUES ('work','Work','💼','#7c3aed');");
+            conn.exec("INSERT INTO tasks (id,list_id,title,notes) VALUES ('welcome','inbox','Welcome to Todo Raptor','This is your inbox task. Edit or delete it.');");
+            conn.exec("INSERT INTO tasks (id,list_id,title,notes) VALUES ('plan','work','Plan project','Create milestones and schedule user interviews.');");
+          }
+        } catch (e) {
+          console.warn('Seeding skipped or failed (sql.js):', e && e.message ? e.message : e);
         }
         const data = conn.export();
         fs.writeFileSync(dbPath, Buffer.from(data));

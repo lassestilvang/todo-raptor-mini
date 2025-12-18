@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getTasks, createTask } from '../../../lib/task-service.server';
+import { ensureSqlJsInitialized } from '../../../lib/db';
 import { z } from 'zod';
 
 const createTaskSchema = z.object({
@@ -10,12 +11,14 @@ const createTaskSchema = z.object({
 });
 
 export async function GET() {
+  await ensureSqlJsInitialized();
   const tasks = await getTasks();
   return NextResponse.json({ tasks });
 }
 
 export async function POST(req: Request) {
   try {
+    await ensureSqlJsInitialized();
     const body = await req.json();
     const parsed = createTaskSchema.parse(body);
     const task = await createTask(parsed);

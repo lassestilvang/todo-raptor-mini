@@ -10,9 +10,9 @@
     "format": "prettier --write .",
     "test": "bun test",
     "test:unit": "bun test",
-    "test:e2e": "playwright test tests/e2e/*.pw.spec.ts",
-    "e2e": "playwright test tests/e2e/*.pw.spec.ts",
-    "ci": "bun install && bun test && npx playwright test tests/e2e/*.pw.spec.ts",
+    "test:e2e": "PW_TEST=1 playwright test tests/e2e/*.pw.spec.ts",
+    "e2e": "PW_TEST=1 playwright test tests/e2e/*.pw.spec.ts",
+    "ci": "bun install && bun test && PW_TEST=1 npx playwright test tests/e2e/*.pw.spec.ts",
     "migrate": "drizzle-kit migrate",
     "seed": "bun run scripts/seed.ts",
     "prepare": "husky",
@@ -56,7 +56,8 @@
     "jsdom": "^27.3.0",
     "lint-staged": "^16.2.7",
     "prettier": "^3.7.4",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "@testing-library/dom": "^8.19.0"
   },
   "lint-staged": {
     "*.{ts,tsx}": [

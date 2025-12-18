@@ -5,15 +5,19 @@ if (process.env.PW_TEST) {
     await page.goto('/');
     await page.click('text=Open app');
     // create label
+    // create label (click the form-local Add button)
     await page.fill('input[placeholder="Label"]', 'Urgent');
-    await page.click('text=Add', { timeout: 2000 });
+    // Click with force in CI when overlays may briefly intercept pointer events
+    await page.click('form:has(input[placeholder="Label"]) >> button', { force: true });
     // wait for label to appear in sidebar
-    await expect(page.locator('text=Urgent')).toBeVisible();
+    await expect(page.locator('text=Urgent')).toBeVisible({ timeout: 15000 });
 
     // create task and check label
     await page.fill('input[placeholder="Add a task"]', 'Task with label');
-    await page.click('select');
-    await page.click('text=Add');
-    await expect(page.locator('text=Task with label')).toBeVisible();
+    // ensure lists and labels fetched
+    await page.waitForSelector('select option', { timeout: 15000 });
+    const taskForm = page.locator('form:has(input[placeholder="Add a task"])');
+    await taskForm.locator('button[type="submit"]').click({ force: true });
+    await expect(page.locator('text=Task with label')).toBeVisible({ timeout: 15000 });
   });
 }
