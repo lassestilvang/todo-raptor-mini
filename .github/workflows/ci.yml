@@ -23,10 +23,14 @@ jobs:
         run: bun test
       - name: Run Playwright
         uses: microsoft/playwright-github-action@v1
+      - name: Init DB (Node)
+        run: node scripts/init-db.node.js
       - name: Run E2E tests
+        env:
+          PW_TEST: '1'
         run: npx playwright test --reporter=list
       - name: Build
-        run: bun run next build
+        run: bun run build
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v4
