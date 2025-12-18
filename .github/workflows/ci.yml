@@ -53,7 +53,13 @@ jobs:
         with:
           node-version: '20'
       - name: Install deps (npm)
-        run: npm ci
+        # Use npm ci when a lockfile is present for reproducible installs; otherwise fall back to npm install
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
       - name: Run Node init script
         run: node scripts/init-db.node.js
       - name: Run Node init test
