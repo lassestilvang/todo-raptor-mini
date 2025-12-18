@@ -94,7 +94,7 @@ try {
                   }
                 }
               } catch (e) {
-                console.warn('Seeding skipped or failed (sql.js in-memory):', e && e.message ? e.message : e);
+                console.warn('Seeding skipped or failed (sql.js in-memory):', (e as any)?.message ?? String(e));
               }
 
               // Persist the in-memory DB to disk so subsequent processes can load it
@@ -105,10 +105,10 @@ try {
                 fs.writeFileSync(dbPath, Buffer.from(data));
                 console.info('Persisted sql.js database to', dbPath);
               } catch (e) {
-                console.warn('Failed to persist sql.js DB to disk:', e && e.message ? e.message : e);
+                console.warn('Failed to persist sql.js DB to disk:', (e as any)?.message ?? String(e));
               }
             } catch (e) {
-              console.warn('Failed to apply migrations to sql.js in-memory DB:', e && e.message ? e.message : e);
+              console.warn('Failed to apply migrations to sql.js in-memory DB:', (e as any)?.message ?? String(e));
             }
           }
           // Expose raw sql.js connection for existing fallbacks in services
