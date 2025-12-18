@@ -23,6 +23,10 @@ jobs:
         run: node scripts/init-db.node.js
       - name: Run tests (Bun)
         run: bun test
+      - name: Setup Node for Playwright (>=20.9.0)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.9.0'
       - name: Run Playwright
         uses: microsoft/playwright-github-action@v1
       - name: Run E2E tests
@@ -43,5 +47,3 @@ jobs:
         with:
           name: coverage
           path: coverage || ''
-
-
