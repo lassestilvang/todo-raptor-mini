@@ -4,8 +4,12 @@ if (process.env.PW_TEST) {
   test('create a task via UI', async ({ page }) => {
     await page.goto('/');
     await page.click('text=Open app');
+    await page.waitForSelector('input[placeholder="Add a task"]');
     await page.fill('input[placeholder="Add a task"]', 'E2E task');
-    await page.click('text=Add');
+    // click the form submit button scoped under the main content to avoid ambiguous Add buttons
+    const submitBtn = page.locator('main form button[type="submit"]');
+    await submitBtn.click();
+    await page.waitForSelector('text=E2E task');
     await expect(page.locator('text=E2E task')).toBeVisible();
   });
 }
