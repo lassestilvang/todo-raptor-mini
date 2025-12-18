@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createLabel, getLabels } from '../../../lib/label-service.server';
+import { ensureSqlJsInitialized } from '../../../lib/db';
 import { z } from 'zod';
 
 const createSchema = z.object({
@@ -9,12 +10,14 @@ const createSchema = z.object({
 });
 
 export async function GET() {
+  await ensureSqlJsInitialized();
   const labels = await getLabels();
   return NextResponse.json({ labels });
 }
 
 export async function POST(req: Request) {
   try {
+    await ensureSqlJsInitialized();
     const body = await req.json();
     const parsed = createSchema.parse(body);
     const label = await createLabel(parsed);

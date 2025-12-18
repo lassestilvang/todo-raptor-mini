@@ -37,7 +37,11 @@ try {
   if (!(globalThis as any)[warnedKey]) {
     console.warn('Warning: default DB initialization skipped (better-sqlite3 not available).');
     console.warn('Attempting to initialize an SQL.js in-memory connection as a fallback (if installed)...');
-    (async () => {
+
+    // Create a fallback initialization promise so API routes or other callers can await DB readiness
+    let fallbackInit: Promise<void> | null = null;
+
+    async function initSqlJsFallback() {
       try {
         // Lazy-require sql.js: if present, create a runtime connection and expose it for services
         // @ts-ignore
@@ -110,7 +114,13 @@ try {
         console.warn('If you want to run without `better-sqlite3`, install `sql.js` or run the dev server with Node and ensure native sqlite3 bindings are present.');
         (globalThis as any)[warnedKey] = true;
       }
-    })();
+    }
+
+    // Start initialization immediately and keep the promise for callers to await
+    fallbackInit = initSqlJsFallback();
+
+    // Expose a function to wait for fallback completion if needed
+    (globalThis as any).__SQL_JS_INIT_PROMISE__ = fallbackInit;
   }
 }
 
@@ -123,4 +133,24 @@ export function getDb() {
 // Allow tests (or other environments) to directly set the underlying drizzle instance
 export function setDb(dbInstance: any) {
   _db = dbInstance;
+}
+
+/**
+ * Wait for SQL.js fallback initialization to complete (if active).
+ * This allows callers (API routes) to await DB readiness when better-sqlite3 is missing.
+ */
+export async function ensureSqlJsInitialized() {
+  // If we have a native DB or sql.js conn, we're ready
+  if (_db) return;
+  // @ts-ignore
+  if ((globalThis as any).__SQL_JS_CONN__) return;
+  // @ts-ignore
+  const p = (globalThis as any).__SQL_JS_INIT_PROMISE__;
+  if (p && typeof p.then === 'function') {
+    try {
+      await p;
+    } catch {
+      // initialization failed, but proceed — callers will handle DB absence
+    }
+  }
 }
