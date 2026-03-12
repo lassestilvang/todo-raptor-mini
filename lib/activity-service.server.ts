@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { getDb } from './db';
 import { activity_log } from '../db/schema';
+import { safeQuery } from './sqljs-utils.server';
 
 export async function logActivity(
   entityType: string,
@@ -54,26 +55,27 @@ export async function getActivityForEntity(entityType: string, entityId: string)
     return rows.map((r: any) => ({
       id: r.id,
       action: r.action,
-      payload: r.payload ? JSON.parse(r.payload) : null,
+      payload: (() => {
+        try { return r.payload ? JSON.parse(r.payload) : null; } catch (_) { return null; }
+      })(),
       createdAt: r.created_at,
     }));
   } catch (e) {
-    // Fallback to raw SQL for SQL.js driver
+    // SQL.js fallback via centralized helper
     // @ts-ignore - runtime global
     const conn: any = (globalThis as any).__SQL_JS_CONN__ || null;
     if (!conn) throw e;
-    const res = conn.exec(
-      `SELECT id, action, payload, created_at FROM activity_log WHERE entity_type = '${entityType}' AND entity_id = '${entityId}'`
-    );
-    const mapped =
-      res && res[0] && res[0].values
-        ? res[0].values.map((v: any[]) => ({
-            id: v[0],
-            action: v[1],
-            payload: v[2] ? JSON.parse(v[2]) : null,
-            createdAt: v[3],
-          }))
-        : [];
-    return mapped;
+    try {
+      const rows = safeQuery(conn, 'SELECT id, action, payload, created_at FROM activity_log WHERE entity_type = ? AND entity_id = ?', [entityType, entityId]);
+      return rows.map((obj: any) => ({
+        id: obj.id,
+        action: obj.action,
+        payload: (() => { try { return obj.payload ? JSON.parse(obj.payload) : null } catch (_) { return null } })(),
+        createdAt: obj.created_at,
+      }));
+    } catch (stmtErr) {
+      console.error('SQL.js fallback failed for activity log:', (stmtErr as any)?.message ?? stmtErr);
+      return [];
+    }
   }
 }
