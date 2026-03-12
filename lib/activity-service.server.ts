@@ -56,7 +56,7 @@ export async function getActivityForEntity(entityType: string, entityId: string)
       id: r.id,
       action: r.action,
       payload: (() => {
-        try { return r.payload ? JSON.parse(r.payload) : null; } catch (_) { return null; }
+        try { return r.payload ? JSON.parse(r.payload) : null; } catch { return null; }
       })(),
       createdAt: r.created_at,
     }));
@@ -70,7 +70,7 @@ export async function getActivityForEntity(entityType: string, entityId: string)
       return rows.map((obj: any) => ({
         id: obj.id,
         action: obj.action,
-        payload: (() => { try { return obj.payload ? JSON.parse(obj.payload) : null } catch (_) { return null } })(),
+        payload: (() => { try { return obj.payload ? JSON.parse(obj.payload) : null } catch { return null } })(),
         createdAt: obj.created_at,
       }));
     } catch (stmtErr) {
