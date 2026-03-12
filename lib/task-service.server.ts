@@ -4,26 +4,52 @@ import { getDb } from './db';
 import { tasks } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { logActivity } from './activity-service.server';
+import { safeQuery, getPreparedOne } from './sqljs-utils.server';
+
+// Helper to map priority numeric value back to string
+function mapPriorityValue(value: number): 'high' | 'medium' | 'low' | 'none' {
+  switch (value) {
+    case 2:
+      return 'high';
+    case 1:
+      return 'medium';
+    case -1:
+      return 'low';
+    default:
+      return 'none';
+  }
+}
+
+function safeParse<T = any>(s: string | null | undefined): T | null {
+  if (!s) return null;
+  try {
+    return JSON.parse(s) as T;
+  } catch (err) {
+    console.warn('safeParse: invalid JSON, returning null');
+    return null;
+  }
+}
 
 // DB-backed task service using Drizzle (falls back to in-memory for edge cases)
 
 export async function createTask(payload: Partial<Task>): Promise<Task> {
   const id = payload.id ?? uuidv4();
   const now = new Date().toISOString();
+  const priorityValue =
+    payload.priority === 'high'
+      ? 2
+      : payload.priority === 'medium'
+        ? 1
+        : payload.priority === 'low'
+          ? -1
+          : 0;
   const row = {
     id,
     list_id: payload.listId ?? 'inbox',
     title: payload.title ?? 'Untitled task',
     notes: payload.notes ?? '',
     status: 'todo',
-    priority:
-      payload.priority === 'high'
-        ? 2
-        : payload.priority === 'medium'
-          ? 1
-          : payload.priority === 'low'
-            ? -1
-            : 0,
+    priority: priorityValue,
     due_date: payload.dueDate ?? null,
     estimate_minutes: payload.estimateMinutes ?? 0,
     actual_minutes: payload.actualMinutes ?? 0,
@@ -37,33 +63,45 @@ export async function createTask(payload: Partial<Task>): Promise<Task> {
   // @ts-ignore - runtime global
   const conn: any = (globalThis as any).__SQL_JS_CONN__ || null;
   if (conn) {
-    const title = row.title.replace(/'/g, "''");
-    const notes = row.notes ? `'${row.notes.replace(/'/g, "''")}'` : 'NULL';
-    const due = row.due_date ? `'${row.due_date}'` : 'NULL';
-    const recurrence = row.recurrence ? `'${row.recurrence.replace(/'/g, "''")}'` : 'NULL';
-    const completed = row.completed_at ? `'${row.completed_at}'` : 'NULL';
-    conn.exec(
-      `INSERT INTO tasks (id, list_id, title, notes, status, priority, due_date, estimate_minutes, actual_minutes, recurrence, created_at, updated_at, completed_at) VALUES ('${id}', '${row.list_id}', '${title}', ${notes}, '${row.status}', ${row.priority}, ${due}, ${row.estimate_minutes}, ${row.actual_minutes}, ${recurrence}, '${row.created_at}', '${row.updated_at}', ${completed})`
+    // Use prepared statement to prevent SQL injection
+    const stmt = conn.prepare(
+      `INSERT INTO tasks (id, list_id, title, notes, status, priority, due_date, estimate_minutes, actual_minutes, recurrence, created_at, updated_at, completed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     );
+    stmt.bind([
+      id,
+      row.list_id,
+      row.title,
+      row.notes,
+      row.status,
+      row.priority,
+      row.due_date,
+      row.estimate_minutes,
+      row.actual_minutes,
+      row.recurrence,
+      row.created_at,
+      row.updated_at,
+      row.completed_at,
+    ]);
+    stmt.step();
+    stmt.free();
+
     await logActivity('task', id, 'created', { title: row.title });
-    const t = conn.exec(`SELECT * FROM tasks WHERE id = '${id}'`);
-    const resultRow = t && t.length > 0 && t[0].values && t[0].values[0] ? t[0].values[0] : null;
-    const mapped = resultRow
-      ? {
-          id: resultRow[0],
-          listId: resultRow[1],
-          title: resultRow[2],
-          notes: resultRow[3],
-          dueDate: resultRow[6],
-          estimateMinutes: resultRow[7],
-          actualMinutes: resultRow[8],
-          recurrence: resultRow[9] ? JSON.parse(resultRow[9]) : null,
-          createdAt: resultRow[10],
-          updatedAt: resultRow[11],
-          completedAt: resultRow[12],
-        }
-      : null;
-    return mapped as any;
+
+    // Return the inserted row using the constructed `row` to avoid brittle re-selects in SQL.js
+    return {
+      id: row.id,
+      listId: row.list_id,
+      title: row.title,
+      notes: row.notes,
+      dueDate: row.due_date,
+      estimateMinutes: row.estimate_minutes,
+      actualMinutes: row.actual_minutes,
+      recurrence: safeParse(row.recurrence),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      completedAt: row.completed_at,
+      priority: mapPriorityValue(row.priority),
+    } as any;
   }
 
   const _db = getDb();
@@ -86,11 +124,11 @@ export async function createTask(payload: Partial<Task>): Promise<Task> {
     dueDate: result.due_date,
     estimateMinutes: result.estimate_minutes,
     actualMinutes: result.actual_minutes,
-    recurrence: result.recurrence ? JSON.parse(result.recurrence) : null,
+    recurrence: safeParse(result.recurrence),
     createdAt: result.created_at,
     updatedAt: result.updated_at,
     completedAt: result.completed_at,
-    priority: 'none',
+    priority: mapPriorityValue(result.priority),
   };
 }
 
@@ -99,31 +137,24 @@ export async function getTasks(): Promise<Task[]> {
   const conn: any = globalThis.__SQL_JS_CONN__ || null;
   if (conn) {
     try {
-      // Use raw SQL via SQL.js
-      const t = conn.exec(
-        `SELECT id,list_id,title,notes,due_date,estimate_minutes,actual_minutes,recurrence,created_at,updated_at,completed_at FROM tasks LIMIT 100`
-      );
-      const rows: any[] = (t && t[0] && t[0].values) || [];
-      const cols: string[] = (t && t[0] && t[0].columns) || [];
-      return rows.map((vals: any[]) => {
-        const r: any = {};
-        cols.forEach((c, i) => (r[c] = vals[i]));
-        return {
-          id: r.id,
-          listId: r.list_id,
-          title: r.title,
-          notes: r.notes,
-          dueDate: r.due_date,
-          estimateMinutes: r.estimate_minutes,
-          actualMinutes: r.actual_minutes,
-          recurrence: r.recurrence ? JSON.parse(r.recurrence) : null,
-          createdAt: r.created_at,
-          updatedAt: r.updated_at,
-          completedAt: r.completed_at,
-          priority: 'none',
-        };
-      });
-    } catch {
+      const sql = 'SELECT id,list_id,title,notes,status,priority,due_date,estimate_minutes,actual_minutes,recurrence,created_at,updated_at,completed_at FROM tasks LIMIT 100';
+      const raw = safeQuery(conn, sql);
+      return raw.map((r: any) => ({
+        id: r.id,
+        listId: r.list_id,
+        title: r.title,
+        notes: r.notes,
+        dueDate: r.due_date,
+        estimateMinutes: r.estimate_minutes,
+        actualMinutes: r.actual_minutes,
+        recurrence: safeParse(r.recurrence),
+        createdAt: r.created_at,
+        updatedAt: r.updated_at,
+        completedAt: r.created_at,
+        priority: mapPriorityValue(r.priority),
+      }));
+    } catch (e) {
+      console.error('Error in getTasks (SQL.js):', (e as any)?.message ?? e);
       return [];
     }
   }
@@ -139,11 +170,11 @@ export async function getTasks(): Promise<Task[]> {
     dueDate: r.due_date,
     estimateMinutes: r.estimate_minutes,
     actualMinutes: r.actual_minutes,
-    recurrence: r.recurrence ? JSON.parse(r.recurrence) : null,
+    recurrence: safeParse(r.recurrence),
     createdAt: r.created_at,
     updatedAt: r.updated_at,
     completedAt: r.completed_at,
-    priority: 'none',
+    priority: mapPriorityValue(r.priority),
   }));
 }
 
@@ -152,14 +183,10 @@ export async function getTaskById(id: string): Promise<Task | null> {
   const conn: any = globalThis.__SQL_JS_CONN__ || null;
   if (conn) {
     try {
-      const t = conn.exec(
-        `SELECT id,list_id,title,notes,due_date,estimate_minutes,actual_minutes,recurrence,created_at,updated_at,completed_at FROM tasks WHERE id = '${id}' LIMIT 1`
-      );
-      const row = (t && t[0] && t[0].values && t[0].values[0]) || null;
-      if (!row) return null;
-      const cols: string[] = (t && t[0] && t[0].columns) || [];
-      const r: any = {};
-      cols.forEach((c, i) => (r[c] = row[i]));
+      // Use prepared statement to prevent SQL injection
+      const sql = 'SELECT id,list_id,title,notes,status,priority,due_date,estimate_minutes,actual_minutes,recurrence,created_at,updated_at,completed_at FROM tasks WHERE id = ? LIMIT 1';
+      const r = getPreparedOne(conn, sql, [id]);
+      if (!r) return null;
       return {
         id: r.id,
         listId: r.list_id,
@@ -168,13 +195,14 @@ export async function getTaskById(id: string): Promise<Task | null> {
         dueDate: r.due_date,
         estimateMinutes: r.estimate_minutes,
         actualMinutes: r.actual_minutes,
-        recurrence: r.recurrence ? JSON.parse(r.recurrence) : null,
+        recurrence: safeParse(r.recurrence),
         createdAt: r.created_at,
         updatedAt: r.updated_at,
         completedAt: r.completed_at,
-        priority: 'none',
+        priority: mapPriorityValue(r.priority),
       };
-    } catch {
+    } catch (e) {
+      console.error('Error in getTaskById (SQL.js):', (e as any)?.message ?? e);
       return null;
     }
   }
@@ -192,11 +220,11 @@ export async function getTaskById(id: string): Promise<Task | null> {
     dueDate: r.due_date,
     estimateMinutes: r.estimate_minutes,
     actualMinutes: r.actual_minutes,
-    recurrence: r.recurrence ? JSON.parse(r.recurrence) : null,
+    recurrence: safeParse(r.recurrence),
     createdAt: r.created_at,
     updatedAt: r.updated_at,
     completedAt: r.completed_at,
-    priority: 'none',
+    priority: mapPriorityValue(r.priority),
   };
 }
 
