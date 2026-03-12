@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 
 type Props = { params: { taskId: string } };
