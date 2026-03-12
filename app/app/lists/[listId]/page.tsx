@@ -3,8 +3,9 @@ import TaskList from '../../../../components/TaskList';
 
 type Props = { params: { listId: string } };
 
-export default function ListPage({ params }: Props) {
-  const { listId } = params;
+export default async function ListPage({ params }: Props) {
+  // `params` may be a Promise in Next.js 16 dynamic routes, so unwrap it
+  const { listId } = await params;
 
   if (!listId) notFound();
 
