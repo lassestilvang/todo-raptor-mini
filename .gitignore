@@ -27,3 +27,4 @@ db/*.db
 
 # Test output
 coverage/
+test-results/
