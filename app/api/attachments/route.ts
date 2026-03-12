@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import { safeQuery } from '../../../lib/sqljs-utils.server';
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -24,26 +25,17 @@ export async function GET(req: Request) {
       rows = [];
     }
 
-    // If no rows via Drizzle, try a raw SQL fallback for SQL.js
+    // If no rows via Drizzle, try a SQL.js fallback (centralized helper)
     // @ts-ignore - runtime global
     const conn: any = (globalThis as any).__SQL_JS_CONN__ || null;
     if ((!rows || rows.length === 0) && conn) {
-      const res = conn.exec(
-        `SELECT id, task_id, filename, size, mime, storage_key, created_at FROM attachments WHERE task_id = '${taskId}'`
-      );
-      const mapped =
-        res && res[0] && res[0].values
-          ? res[0].values.map((v: any[]) => ({
-              id: v[0],
-              task_id: v[1],
-              filename: v[2],
-              size: v[3],
-              mime: v[4],
-              storage_key: v[5],
-              created_at: v[6],
-            }))
-          : [];
-      return NextResponse.json({ attachments: mapped });
+      try {
+        const sql = 'SELECT id, task_id, filename, size, mime, storage_key, created_at FROM attachments WHERE task_id = ?';
+        const mapped = safeQuery(conn, sql, [taskId]);
+        return NextResponse.json({ attachments: mapped });
+      } catch (e) {
+        console.error('SQL.js fallback error in attachments GET:', (e as any)?.message ?? e);
+      }
     }
 
     return NextResponse.json({ attachments: rows });
@@ -59,14 +51,42 @@ export async function POST(req: Request) {
   if (!file) {
     return NextResponse.json({ error: 'No file' }, { status: 400 });
   }
+
+  // Validate file type (allow common safe types)
+  const allowedMimeTypes = [
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+    'application/pdf',
+    'text/plain',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  ];
+  if (file.type && !allowedMimeTypes.includes(file.type)) {
+    return NextResponse.json(
+      { error: 'File type not allowed' },
+      { status: 400 }
+    );
+  }
+
   const storageDir = path.join(process.cwd(), 'storage', 'attachments');
   if (!fs.existsSync(storageDir)) fs.mkdirSync(storageDir, { recursive: true });
 
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
-  const filename = (file as any).name || `upload-${Date.now()}`;
+  const originalFilename = (file as any).name || `upload-${Date.now()}`;
+
+  // Sanitize filename to prevent path traversal
+  const filename = originalFilename.replace(/\.\./g, '').replace(/[\\/]/g, '_');
   const outPath = path.join(storageDir, `${Date.now()}-${filename}`);
-  fs.writeFileSync(outPath, buffer);
+
+  try {
+    fs.writeFileSync(outPath, buffer);
+  } catch (writeErr) {
+    console.error('Failed to write file:', writeErr);
+    return NextResponse.json({ error: 'Failed to save file' }, { status: 500 });
+  }
 
   // If taskId provided, store metadata in DB
   const _taskId = (form.get('taskId') as string) || null;
@@ -79,6 +99,7 @@ export async function POST(req: Request) {
     storage_key: outPath,
     created_at: new Date().toISOString(),
   };
+
   try {
     const _db = await import('../../../lib/db').then((m) => m.getDb());
     if (_db) {
@@ -91,9 +112,9 @@ export async function POST(req: Request) {
         await insertQuery;
       }
     }
-  } catch (_err) {
-    // ignore DB errors in upload path
-    void _err;
+  } catch (dbErr) {
+    console.error('Failed to store attachment metadata:', dbErr);
+    // Continue to return success for file upload even if DB fails
   }
 
   return NextResponse.json({ filename, size: buffer.length, storage_key: outPath });
