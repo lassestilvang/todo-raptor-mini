@@ -10,17 +10,17 @@ export async function GET() {
   const conn: any = (globalThis as any).__SQL_JS_CONN__ || null;
   if (conn) {
     try {
-      const res = conn.exec(
-        `SELECT COUNT(*) as c FROM tasks WHERE due_date IS NOT NULL AND due_date < '${now}' AND completed_at IS NULL`
+      // Use prepared statement to prevent SQL injection
+      const stmt = conn.prepare(
+        'SELECT COUNT(*) as c FROM tasks WHERE due_date IS NOT NULL AND due_date < ? AND completed_at IS NULL'
       );
-      const count =
-        res && res[0] && res[0].values && res[0].values[0] && res[0].values[0][0]
-          ? res[0].values[0][0]
-          : 0;
+      stmt.bind([now]);
+      const res = stmt.get();
+      const count = res && res[0] ? res[0] : 0;
       return NextResponse.json({ overdueCount: count });
-    } catch (_e) {
+    } catch (e) {
+      console.error('Error in stats GET (SQL.js):', e);
       // fallback to drizzle path below
-      void _e;
     }
   }
 
