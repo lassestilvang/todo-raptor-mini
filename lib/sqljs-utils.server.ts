@@ -19,7 +19,7 @@ function extractColumnNamesFromSql(sql: string): string[] {
         const last = parts[parts.length - 1].trim();
         return last.replace(/[`"']/g, '');
       });
-  } catch (_) {
+  } catch {
     return [];
   }
 }
@@ -46,7 +46,7 @@ export function runPrepared(conn: any, sql: string, params: any[] = []): RowObje
   } finally {
     try {
       stmt.free();
-    } catch (_err) {
+    } catch {
       // ignore
     }
   }
@@ -73,7 +73,7 @@ export function getPreparedOne(conn: any, sql: string, params: any[] = []): RowO
   } finally {
     try {
       stmt.free();
-    } catch (_err) {
+    } catch {
       // ignore
     }
   }
