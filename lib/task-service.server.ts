@@ -24,7 +24,7 @@ function safeParse<T = any>(s: string | null | undefined): T | null {
   if (!s) return null;
   try {
     return JSON.parse(s) as T;
-  } catch (err) {
+  } catch {
     console.warn('safeParse: invalid JSON, returning null');
     return null;
   }
