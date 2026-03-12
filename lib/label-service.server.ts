@@ -58,14 +58,17 @@ export async function getLabelById(id: string) {
   const conn: any = globalThis.__SQL_JS_CONN__ || null;
   if (conn) {
     try {
-      const t = conn.exec(`SELECT id,name,color,icon FROM labels WHERE id = '${id}' LIMIT 1`);
-      const row = (t && t[0] && t[0].values && t[0].values[0]) || null;
-      if (!row) return null;
-      const cols: string[] = (t && t[0] && t[0].columns) || [];
+      // Use prepared statement to prevent SQL injection
+      const stmt = conn.prepare('SELECT id,name,color,icon FROM labels WHERE id = ? LIMIT 1');
+      stmt.bind([id]);
+      const result = stmt.get();
+      if (!result) return null;
+      const cols: string[] = (conn.prepare('SELECT * FROM labels').columns) || ['id', 'name', 'color', 'icon'];
       const r: any = {};
-      cols.forEach((c, i) => (r[c] = row[i]));
+      cols.forEach((c: string, i: number) => (r[c] = result[i]));
       return { id: r.id, name: r.name, color: r.color, icon: r.icon };
-    } catch {
+    } catch (e) {
+      console.error('Error in getLabelById:', e);
       return null;
     }
   }
