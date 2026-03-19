@@ -1,5 +1,8 @@
 import './globals.css';
-import { PropsWithChildren } from 'react';
+import type { PropsWithChildren } from 'react';
+import { Inter } from 'next/font/google';
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata = {
   title: 'Todo Raptor',
@@ -8,8 +11,8 @@ export const metadata = {
 
 export default function RootLayout({ children }: PropsWithChildren) {
   return (
-    <html lang="en">
-      <body className="min-h-screen bg-white text-black dark:bg-black dark:text-white">
+    <html lang="en" className={`${inter.variable} h-full`}>
+      <body className="min-h-screen text-foreground bg-background">
         {children}
       </body>
     </html>
