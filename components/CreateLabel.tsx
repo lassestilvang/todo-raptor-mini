@@ -25,18 +25,25 @@ export default function CreateLabel() {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex gap-2 mt-2">
-      <input
-        {...register('icon')}
-        placeholder="Icon"
-        className="w-12 px-2 py-1 rounded bg-slate-800"
-      />
-      <input
-        {...register('name')}
-        placeholder="Label"
-        className="flex-1 px-2 py-1 rounded bg-slate-800"
-      />
-      <button className="px-2 py-1 rounded bg-amber-600">Add</button>
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-2">
+      <div className="flex gap-2">
+        <input
+          {...register('icon')}
+          placeholder="Icon"
+          className="w-14 rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-foreground/50 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+        />
+        <input
+          {...register('name')}
+          placeholder="Label"
+          className="flex-1 rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-foreground/50 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+        />
+        <button
+          type="submit"
+          className="rounded-xl bg-amber-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-amber-400"
+        >
+          Add
+        </button>
+      </div>
     </form>
   );
 }
