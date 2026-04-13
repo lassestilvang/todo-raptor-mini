@@ -1,7 +1,7 @@
 if (process.env.PW_TEST) {
-  const { test, expect } = require('@playwright/test');
+  const { test, expect } = require('@playwright/test') as typeof import('@playwright/test');
 
-  test('search finds tasks', async ({ page }) => {
+  test('search finds tasks', async ({ page }: { page: any }) => {
     await page.goto('/');
     await page.click('text=Open app');
     await page.waitForSelector('input[placeholder="Search tasks"]', { timeout: 15000 });
