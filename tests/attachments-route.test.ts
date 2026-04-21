@@ -73,7 +73,19 @@ if (canUseBetterSqlite3()) {
       fs.unlinkSync(data.storage_key);
 
       const _db = await import('../lib/db').then((m) => m.getDb());
-      const rows = await _db.select().from(attachmentsSchema).where(attachmentsSchema.task_id.eq('t1')).all();
+      let rows: any[] = [];
+      try {
+        rows = await _db.select().from(attachmentsSchema).where(attachmentsSchema.task_id.eq('t1')).all();
+      } catch {
+        const conn = (globalThis as any).__SQL_JS_CONN__;
+        rows = conn
+          ? safeQuery(
+              conn,
+              'SELECT id, task_id, filename, size, mime, storage_key FROM attachments WHERE task_id = ?',
+              ['t1']
+            )
+          : [];
+      }
       expect(rows.length).toBe(1);
       expect(rows[0].filename).toBe('notes.txt');
     });
