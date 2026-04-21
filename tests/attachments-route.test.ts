@@ -17,7 +17,7 @@ if (canUseBetterSqlite3()) {
       const form = new FormData();
       form.append('file', new File(['bad'], 'bad.exe', { type: 'application/x-msdownload' }));
       const { POST } = await import('../app/api/attachments/route');
-      const res = await POST(new Request('http://localhost/api/attachments', { method: 'POST', body: form }));
+      const res = await POST({ formData: async () => form } as any);
       expect(res.status).toBe(400);
       const data = await res.json();
       expect(data.error).toBe('File type not allowed');
