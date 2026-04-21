@@ -4,6 +4,7 @@ import path from 'path';
 import { canUseBetterSqlite3, initBetterSqliteMemoryDb, initSqlJsDb } from './setup-db';
 import { setDb, getDb } from '../lib/db';
 import { attachments as attachmentsSchema } from '../db/schema';
+import { safeQuery } from '../lib/sqljs-utils.server';
 
 const storageDir = path.join(process.cwd(), 'storage', 'attachments');
 
