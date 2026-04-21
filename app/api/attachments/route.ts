@@ -52,7 +52,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'No file' }, { status: 400 });
   }
 
-  // Validate file type (allow common safe types)
+  // Validate file type (allow common safe types).
+  // Some environments append charset values like text/plain;charset=utf-8.
   const allowedMimeTypes = [
     'image/jpeg',
     'image/png',
@@ -63,7 +64,8 @@ export async function POST(req: Request) {
     'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   ];
-  if (file.type && !allowedMimeTypes.includes(file.type)) {
+  const fileType = file.type ? file.type.split(';')[0].trim() : '';
+  if (fileType && !allowedMimeTypes.includes(fileType)) {
     return NextResponse.json(
       { error: 'File type not allowed' },
       { status: 400 }
