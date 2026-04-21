@@ -13,7 +13,8 @@ Quick start
 4. Seed sample data (optional): `bun run seed`
 5. Run dev server: `bun run next dev`
 6. Run unit tests: `bun test`
-7. Run E2E tests (Playwright): `npx playwright test`
+7. Run coverage: `bun run test:coverage`
+8. Run E2E tests (Playwright): `npx playwright test`
 
 Project structure
 
