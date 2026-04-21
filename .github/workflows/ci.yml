@@ -31,8 +31,8 @@ jobs:
       - name: Validate SQLite initialization
         run: node scripts/init-db.node.js
 
-      - name: Run unit tests
-        run: bun test
+      - name: Run unit tests with coverage
+        run: bun run test:coverage
 
       - name: Build app
         run: bun run build
@@ -58,3 +58,10 @@ jobs:
         with:
           name: playwright-traces
           path: test-results/**
+
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/**
