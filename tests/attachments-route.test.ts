@@ -61,7 +61,13 @@ if (canUseBetterSqlite3()) {
     it('stores attachments and returns metadata (sql.js)', async () => {
       const form = new FormData();
       form.append('taskId', 't1');
-      form.append('file', new File(['hello world'], 'notes.txt', { type: 'text/plain' }));
+      form.append('file', {
+        name: 'notes.txt',
+        type: 'text/plain',
+        async arrayBuffer() {
+          return new TextEncoder().encode('hello world').buffer;
+        },
+      } as any);
       const { POST } = await import('../app/api/attachments/route');
       const res = await POST({ formData: async () => form } as any);
       expect(res.status).toBe(200);
