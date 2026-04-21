@@ -63,7 +63,7 @@ if (canUseBetterSqlite3()) {
       form.append('taskId', 't1');
       form.append('file', new File(['hello world'], 'notes.txt', { type: 'text/plain' }));
       const { POST } = await import('../app/api/attachments/route');
-      const res = await POST(new Request('http://localhost/api/attachments', { method: 'POST', body: form }));
+      const res = await POST({ formData: async () => form } as any);
       expect(res.status).toBe(200);
       const data = await res.json();
       expect(data.filename).toContain('notes.txt');
