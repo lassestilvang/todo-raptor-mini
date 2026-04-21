@@ -6,7 +6,21 @@ import ThemeToggle from '../components/ThemeToggle';
 describe('ThemeToggle component', () => {
   beforeEach(() => {
     document.documentElement.className = '';
-    window.localStorage.clear();
+    const storage: Record<string, string> = {};
+    Object.defineProperty(window, 'localStorage', {
+      configurable: true,
+      value: {
+        getItem(key: string) {
+          return storage[key] ?? null;
+        },
+        setItem(key: string, value: string) {
+          storage[key] = value;
+        },
+        clear() {
+          Object.keys(storage).forEach((key) => delete storage[key]);
+        },
+      },
+    });
     // @ts-ignore
     window.matchMedia = (query: string) => ({
       matches: false,
