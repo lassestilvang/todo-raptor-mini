@@ -8,13 +8,15 @@ describe('Create form components', () => {
     const { getByPlaceholderText, getByRole } = render(<CreateLabel />);
     expect(getByPlaceholderText('Icon')).toBeTruthy();
     expect(getByPlaceholderText('Label')).toBeTruthy();
-    expect(getByRole('button')).toHaveTextContent('Add');
+    const button = getByRole('button');
+    expect(button.textContent).toBe('Add');
   });
 
   it('renders CreateList form', () => {
     const { getByPlaceholderText, getByRole } = render(<CreateList />);
     expect(getByPlaceholderText('Emoji')).toBeTruthy();
     expect(getByPlaceholderText('New list')).toBeTruthy();
-    expect(getByRole('button')).toHaveTextContent('Add');
+    const button = getByRole('button');
+    expect(button.textContent).toBe('Add');
   });
 });
