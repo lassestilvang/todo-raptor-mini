@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDb } from './db';
 import { lists } from '../db/schema';
 import { eq } from 'drizzle-orm';
+import { getPreparedOne, runPrepared } from './sqljs-utils.server';
 
 export async function createList(payload: { title: string; color?: string; emoji?: string }) {
   const id = uuidv4();
@@ -44,19 +45,7 @@ export async function getLists() {
   // @ts-ignore - runtime global
   const conn: any = globalThis.__SQL_JS_CONN__ || null;
   if (conn) {
-    try {
-      const t = conn.exec('SELECT id,title,color,emoji FROM lists');
-      const rows = (t && t[0] && t[0].values) || [];
-      const cols: string[] = (t && t[0] && t[0].columns) || [];
-      return rows.map((vals: any[]) => {
-        const r: any = {};
-        cols.forEach((c, i) => (r[c] = vals[i]));
-        return { id: r.id, title: r.title, color: r.color, emoji: r.emoji };
-      });
-    } catch {
-      // Table may not exist in an in-memory sql.js DB; return empty list
-      return [];
-    }
+    return runPrepared(conn, 'SELECT id,title,color,emoji FROM lists');
   }
 
   const _db = getDb();
@@ -69,20 +58,9 @@ export async function getListById(id: string) {
   // @ts-ignore - runtime global
   const conn: any = globalThis.__SQL_JS_CONN__ || null;
   if (conn) {
-    try {
-      // Use prepared statement to prevent SQL injection
-      const stmt = conn.prepare('SELECT id,title,color,emoji FROM lists WHERE id = ? LIMIT 1');
-      stmt.bind([id]);
-      const result = stmt.get();
-      if (!result) return null;
-      const cols: string[] = (conn.prepare('SELECT * FROM lists').columns) || ['id', 'title', 'color', 'emoji'];
-      const r: any = {};
-      cols.forEach((c: string, i: number) => (r[c] = result[i]));
-      return { id: r.id, title: r.title, color: r.color, emoji: r.emoji };
-    } catch (e) {
-      console.error('Error in getListById:', e);
-      return null;
-    }
+    const row = getPreparedOne(conn, 'SELECT id,title,color,emoji FROM lists WHERE id = ? LIMIT 1', [id]);
+    if (!row) return null;
+    return { id: row.id, title: row.title, color: row.color, emoji: row.emoji };
   }
 
   const _db = getDb();
