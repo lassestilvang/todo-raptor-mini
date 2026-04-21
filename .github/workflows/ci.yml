@@ -7,59 +7,54 @@ on:
     branches: [main]
 
 jobs:
-  build:
-    runs-on: macos-latest
+  ci:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.9.0'
+
       - name: Install Bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: '1.0.0'
-      - name: Install deps
+
+      - name: Install dependencies
         run: bun install
+
       - name: Lint
         run: bun run lint
-      - name: Init DB (Node)
+
+      - name: Validate SQLite initialization
         run: node scripts/init-db.node.js
-      - name: Run tests (Bun)
+
+      - name: Run unit tests
         run: bun test
-      - name: Setup Node for Playwright (>=20.9.0)
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.9.0'
-      - name: Run Playwright
-        uses: microsoft/playwright-github-action@v1
-      - name: Ensure Node >=20.9.0 for E2E step
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.9.0'
+
+      - name: Build app
+        run: bun run build
+
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
-      - name: Ensure Node >=20.9.0 for build
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.9.0'
-      - name: Build (Node)
-        run: node ./node_modules/next/dist/bin/next build
+
       - name: Run E2E tests
         env:
           PW_TEST: '1'
         run: npx playwright test --reporter=list,html --retries=1
-      - name: Upload test reports
+
+      - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
           path: playwright-report/
+
       - name: Upload Playwright traces
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-traces
           path: test-results/**
-      - name: Archive coverage
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage
-          path: coverage || ''
