@@ -17,7 +17,7 @@ if (canUseBetterSqlite3()) {
       const form = new FormData();
       form.append('file', new File(['bad'], 'bad.exe', { type: 'application/x-msdownload' }));
       const { POST } = await import('../app/api/attachments/route');
-      const res = await POST({ formData: async () => form } as any);
+      const res = await POST(new Request('http://localhost/api/attachments', { method: 'POST', body: form }));
       expect(res.status).toBe(400);
       const data = await res.json();
       expect(data.error).toBe('File type not allowed');
@@ -28,7 +28,7 @@ if (canUseBetterSqlite3()) {
       form.append('taskId', 't1');
       form.append('file', new File(['hello world'], 'notes.txt', { type: 'text/plain' }));
       const { POST } = await import('../app/api/attachments/route');
-      const res = await POST({ formData: async () => form } as any);
+      const res = await POST(new Request('http://localhost/api/attachments', { method: 'POST', body: form }));
       expect(res.status).toBe(200);
       const data = await res.json();
       expect(data.filename).toContain('notes.txt');
@@ -52,7 +52,7 @@ if (canUseBetterSqlite3()) {
       const form = new FormData();
       form.append('file', new File(['bad'], 'bad.exe', { type: 'application/x-msdownload' }));
       const { POST } = await import('../app/api/attachments/route');
-      const res = await POST({ formData: async () => form } as any);
+      const res = await POST(new Request('http://localhost/api/attachments', { method: 'POST', body: form }));
       expect(res.status).toBe(400);
       const data = await res.json();
       expect(data.error).toBe('File type not allowed');
@@ -61,15 +61,9 @@ if (canUseBetterSqlite3()) {
     it('stores attachments and returns metadata (sql.js)', async () => {
       const form = new FormData();
       form.append('taskId', 't1');
-      form.append('file', {
-        name: 'notes.txt',
-        type: 'text/plain',
-        async arrayBuffer() {
-          return new TextEncoder().encode('hello world').buffer;
-        },
-      } as any);
+      form.append('file', new File(['hello world'], 'notes.txt', { type: 'text/plain' }));
       const { POST } = await import('../app/api/attachments/route');
-      const res = await POST({ formData: async () => form } as any);
+      const res = await POST(new Request('http://localhost/api/attachments', { method: 'POST', body: form }));
       expect(res.status).toBe(200);
       const data = await res.json();
       expect(data.filename).toContain('notes.txt');
