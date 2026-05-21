@@ -2,12 +2,17 @@
 
 import React from 'react';
 
-export default function TaskItem({ task }: { task: any }) {
+const dateFormatter = new Intl.DateTimeFormat(undefined, {
+  month: 'short',
+  day: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+});
+
+function TaskItem({ task }: { task: any }) {
   // Guard framer-motion import to avoid server-side bundler issues
   const MotionWrapper = React.useMemo(() => {
     try {
-      // dynamically require on client only
-
       const fm = require('framer-motion');
       return fm.motion?.div || ((props: any) => <div {...props} />);
     } catch (_err) {
@@ -17,17 +22,12 @@ export default function TaskItem({ task }: { task: any }) {
   }, []);
 
   const MotionDiv: any = MotionWrapper;
-
   const dueDate = task.dueDate ? new Date(task.dueDate) : null;
   const now = new Date();
   const isOverdue = dueDate ? dueDate < now : false;
   const completed = Boolean(task.completedAt);
 
-  const dueLabel = dueDate
-    ? dueDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) +
-      ' ' +
-      dueDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
-    : null;
+  const dueLabel = dueDate ? dateFormatter.format(dueDate) : null;
 
   return (
     <MotionDiv
@@ -69,3 +69,5 @@ export default function TaskItem({ task }: { task: any }) {
     </MotionDiv>
   );
 }
+
+export default React.memo(TaskItem);
