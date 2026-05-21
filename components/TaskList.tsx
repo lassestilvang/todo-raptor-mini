@@ -5,7 +5,7 @@ import TaskItem from './TaskItem';
 import TaskForm from './TaskForm';
 import SearchBar from './SearchBar';
 
-export default function TaskList({ listId = 'inbox' }: { listId?: string }) {
+export default function TaskList({ listId }: { listId?: string }) {
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
