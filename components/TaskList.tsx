@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import TaskItem from './TaskItem';
 import TaskForm from './TaskForm';
 import SearchBar from './SearchBar';
@@ -8,22 +8,28 @@ import SearchBar from './SearchBar';
 export default function TaskList({ listId = 'inbox' }: { listId?: string }) {
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState('');
+  const [query, setQuery] = useState('');
 
   async function fetchTasks() {
     setLoading(true);
-    const res = await fetch('/api/tasks');
+    const queryParam = listId ? `?listId=${encodeURIComponent(listId)}` : '';
+    const res = await fetch(`/api/tasks${queryParam}`);
     const data = await res.json();
     setTasks(data.tasks || []);
     setLoading(false);
   }
 
-  const [query, setQuery] = useState('');
-
   useEffect(() => {
     fetchTasks();
   }, [listId]);
 
-  const filtered = React.useMemo(() => {
+  useEffect(() => {
+    const handler = window.setTimeout(() => setQuery(search), 150);
+    return () => window.clearTimeout(handler);
+  }, [search]);
+
+  const filtered = useMemo(() => {
     if (!query) return tasks;
     try {
       // lazy import fuse to keep bundle light
@@ -41,14 +47,16 @@ export default function TaskList({ listId = 'inbox' }: { listId?: string }) {
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-2xl font-semibold text-foreground">Tasks</h2>
-          <p className="text-sm text-foreground/70">
-            {filtered.length === 0 && !loading
+          <p className="text-sm text-foreground/70" aria-live="polite">
+            {loading
+              ? 'Loading tasks…'
+              : filtered.length === 0
               ? 'No tasks yet — your day is clear!'
               : `Showing ${filtered.length} task${filtered.length === 1 ? '' : 's'}`}
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <SearchBar value={query} onChange={setQuery} />
+          <SearchBar value={search} onChange={setSearch} />
         </div>
       </header>
 

@@ -132,13 +132,15 @@ export async function createTask(payload: Partial<Task>): Promise<Task> {
   };
 }
 
-export async function getTasks(): Promise<Task[]> {
+export async function getTasks(listId?: string): Promise<Task[]> {
   // @ts-ignore - runtime global
   const conn: any = globalThis.__SQL_JS_CONN__ || null;
   if (conn) {
     try {
-      const sql = 'SELECT id,list_id,title,notes,status,priority,due_date,estimate_minutes,actual_minutes,recurrence,created_at,updated_at,completed_at FROM tasks LIMIT 100';
-      const raw = safeQuery(conn, sql);
+      const sql = listId
+        ? 'SELECT id,list_id,title,notes,status,priority,due_date,estimate_minutes,actual_minutes,recurrence,created_at,updated_at,completed_at FROM tasks WHERE list_id = ? LIMIT 100'
+        : 'SELECT id,list_id,title,notes,status,priority,due_date,estimate_minutes,actual_minutes,recurrence,created_at,updated_at,completed_at FROM tasks LIMIT 100';
+      const raw = listId ? safeQuery(conn, sql, [listId]) : safeQuery(conn, sql);
       return raw.map((r: any) => ({
         id: r.id,
         listId: r.list_id,
@@ -150,7 +152,7 @@ export async function getTasks(): Promise<Task[]> {
         recurrence: safeParse(r.recurrence),
         createdAt: r.created_at,
         updatedAt: r.updated_at,
-        completedAt: r.created_at,
+        completedAt: r.completed_at,
         priority: mapPriorityValue(r.priority),
       }));
     } catch (e) {
@@ -161,7 +163,9 @@ export async function getTasks(): Promise<Task[]> {
 
   const _db = getDb();
   if (!_db) return [];
-  const rows = await _db.select().from(tasks).limit(100).all();
+  let query = _db.select().from(tasks);
+  if (listId) query = query.where(eq(tasks.list_id, listId));
+  const rows = await query.limit(100).all();
   return rows.map((r: any) => ({
     id: r.id,
     listId: r.list_id,

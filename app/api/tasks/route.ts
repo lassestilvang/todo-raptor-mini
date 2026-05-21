@@ -10,9 +10,11 @@ const createTaskSchema = z.object({
   listId: z.string().optional(),
 });
 
-export async function GET() {
+export async function GET(req: Request) {
   await ensureSqlJsInitialized();
-  const tasks = await getTasks();
+  const url = new URL(req.url);
+  const listId = url.searchParams.get('listId') || undefined;
+  const tasks = await getTasks(listId);
   return NextResponse.json({ tasks });
 }
 
