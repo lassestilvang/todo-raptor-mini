@@ -1,20 +1,25 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Sidebar from './Sidebar';
 import ThemeToggle from './ThemeToggle';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const sidebarOpenRef = useRef(sidebarOpen);
+
+  useEffect(() => {
+    sidebarOpenRef.current = sidebarOpen;
+  }, [sidebarOpen]);
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape' && sidebarOpen) setSidebarOpen(false);
+      if (e.key === 'Escape' && sidebarOpenRef.current) setSidebarOpen(false);
     }
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [sidebarOpen]);
+  }, []);
 
   return (
     <div className="min-h-screen">

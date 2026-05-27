@@ -16,6 +16,7 @@ export default function SearchBar({
         viewBox="0 0 24 24"
         stroke="currentColor"
         strokeWidth={2}
+        aria-hidden="true"
       >
         <path
           strokeLinecap="round"
@@ -24,10 +25,12 @@ export default function SearchBar({
         />
       </svg>
       <input
+        type="search"
         placeholder="Search tasks"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="w-full rounded-2xl border border-border bg-card py-2 pl-10 pr-4 text-sm text-foreground placeholder:text-foreground/50 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+        aria-label="Search tasks"
       />
     </div>
   );
