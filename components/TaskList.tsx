@@ -123,7 +123,7 @@ export default function TaskList({ listId }: { listId?: string }) {
         ) : (
           <div className="space-y-3">
             {filtered.map((t: any) => (
-              <TaskItem key={t.id} task={t} />
+              <TaskItem key={t.id} task={t} onUpdate={fetchTasks} />
             ))}
           </div>
         )}

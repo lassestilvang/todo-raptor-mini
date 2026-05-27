@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import React from 'react';
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
@@ -22,7 +23,8 @@ function getMotionDiv() {
   return MotionDiv;
 }
 
-function TaskItem({ task }: { task: any }) {
+function TaskItem({ task, onUpdate }: { task: any; onUpdate?: () => void }) {
+  const [isUpdating, setIsUpdating] = React.useState(false);
   const MotionComponent = getMotionDiv();
   const dueDate = task.dueDate ? new Date(task.dueDate) : null;
   const now = new Date();
@@ -30,6 +32,30 @@ function TaskItem({ task }: { task: any }) {
   const completed = Boolean(task.completedAt);
 
   const dueLabel = dueDate ? dateFormatter.format(dueDate) : null;
+
+  const toggleCompleted = React.useCallback(async () => {
+    if (isUpdating) return;
+    setIsUpdating(true);
+
+    try {
+      const res = await fetch(`/api/tasks/${task.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completed: !completed }),
+      });
+
+      if (res.ok) {
+        onUpdate?.();
+      } else {
+        const body = await res.json();
+        console.warn('Unable to update task:', body.error || res.statusText);
+      }
+    } catch (err) {
+      console.error('Task update failed', err);
+    } finally {
+      setIsUpdating(false);
+    }
+  }, [completed, isUpdating, onUpdate, task.id]);
 
   return (
     <MotionComponent
@@ -44,28 +70,44 @@ function TaskItem({ task }: { task: any }) {
             {completed ? '✅' : '📝'}
           </div>
           <div>
-            <div className="text-sm font-semibold text-foreground">{task.title}</div>
+            <Link
+              href={`/app/tasks/${task.id}`}
+              className="text-sm font-semibold text-foreground transition hover:text-indigo-300"
+            >
+              {task.title}
+            </Link>
             {task.notes ? (
               <div className="mt-1 text-xs text-foreground/60 max-h-10 overflow-hidden">{task.notes}</div>
             ) : null}
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-xs font-medium">
-          {dueLabel ? (
-            <span
-              className={`rounded-full px-3 py-1 ${
-                isOverdue ? 'bg-red-500/20 text-red-200' : 'bg-card/80 text-foreground/70'
-              }`}
-            >
-              {dueLabel}
-            </span>
-          ) : null}
-          {completed ? (
-            <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-emerald-100">
-              Completed
-            </span>
-          ) : null}
+        <div className="flex flex-col items-end gap-2 text-xs font-medium sm:text-right">
+          <div className="flex flex-wrap items-center gap-2">
+            {dueLabel ? (
+              <span
+                className={`rounded-full px-3 py-1 ${
+                  isOverdue ? 'bg-red-500/20 text-red-200' : 'bg-card/80 text-foreground/70'
+                }`}
+              >
+                {dueLabel}
+              </span>
+            ) : null}
+            {completed ? (
+              <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-emerald-100">
+                Completed
+              </span>
+            ) : null}
+          </div>
+          <button
+            type="button"
+            onClick={toggleCompleted}
+            disabled={isUpdating}
+            className="rounded-2xl bg-slate-800 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-foreground/90 transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+            aria-label={completed ? 'Mark task as incomplete' : 'Mark task as complete'}
+          >
+            {isUpdating ? 'Saving…' : completed ? 'Undo' : 'Complete'}
+          </button>
         </div>
       </div>
     </MotionComponent>
