@@ -8,6 +8,8 @@ const createTaskSchema = z.object({
   notes: z.string().optional(),
   dueDate: z.string().optional(),
   listId: z.string().optional(),
+  priority: z.enum(['high', 'medium', 'low', 'none']).optional(),
+  labels: z.array(z.string()).optional(),
 });
 
 export async function GET(req: Request) {
