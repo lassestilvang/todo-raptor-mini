@@ -2,6 +2,7 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useCachedResource } from '../lib/client-cache';
 
 const schema = z.object({
   title: z.string().min(1),
@@ -28,28 +29,8 @@ export default function TaskForm({
     defaultValues: { listId: initialListId ?? 'inbox' },
   });
 
-  const [lists, setLists] = React.useState<any[]>([]);
-  const [labels, setLabels] = React.useState<any[]>([]);
-
-  React.useEffect(() => {
-    const controller = new AbortController();
-
-    async function loadMetadata() {
-      try {
-        const [listsRes, labelsRes] = await Promise.all([
-          fetch('/api/lists', { signal: controller.signal }).then((r) => r.json()),
-          fetch('/api/labels', { signal: controller.signal }).then((r) => r.json()),
-        ]);
-        setLists(listsRes.lists || []);
-        setLabels(labelsRes.labels || []);
-      } catch (error: any) {
-        if (error.name === 'AbortError') return;
-      }
-    }
-
-    loadMetadata();
-    return () => controller.abort();
-  }, []);
+  const lists = useCachedResource('lists');
+  const labels = useCachedResource('labels');
 
   React.useEffect(() => {
     reset({ listId: initialListId ?? 'inbox' });

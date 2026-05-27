@@ -1,24 +1,14 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useCachedResource } from '../lib/client-cache';
 
 export default function Lists() {
-  const [lists, setLists] = useState<any[]>([]);
-
-  async function fetchLists() {
-    const res = await fetch('/api/lists');
-    const data = await res.json();
-    setLists(data.lists || []);
-  }
-
-  useEffect(() => {
-    fetchLists();
-  }, []);
+  const lists = useCachedResource('lists');
 
   return (
     <div className="flex flex-col gap-1">
-      {lists.map((l) => (
+      {lists.map((l: any) => (
         <Link
           key={l.id}
           href={`/app/lists/${l.id}`}
