@@ -84,6 +84,19 @@ function TaskItem({ task, onUpdate }: { task: any; onUpdate?: () => void }) {
 
         <div className="flex flex-col items-end gap-2 text-xs font-medium sm:text-right">
           <div className="flex flex-wrap items-center gap-2">
+            {task.priority && task.priority !== 'none' ? (
+              <span
+                className={`rounded-full px-3 py-1 ${
+                  task.priority === 'high'
+                    ? 'bg-rose-500/20 text-rose-200'
+                    : task.priority === 'medium'
+                    ? 'bg-amber-500/20 text-amber-100'
+                    : 'bg-slate-500/20 text-slate-100'
+                }`}
+              >
+                {task.priority}
+              </span>
+            ) : null}
             {dueLabel ? (
               <span
                 className={`rounded-full px-3 py-1 ${

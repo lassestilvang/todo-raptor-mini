@@ -9,6 +9,8 @@ const schema = z.object({
   notes: z.string().optional(),
   listId: z.string().optional(),
   labels: z.any().optional(),
+  dueDate: z.string().optional(),
+  priority: z.enum(['none', 'low', 'medium', 'high']).optional(),
 });
 type FormData = z.infer<typeof schema>;
 
@@ -67,6 +69,31 @@ export default function TaskForm({
           placeholder="Add a task"
           required
         />
+
+        <label htmlFor="task-due" className="sr-only">
+          Due date
+        </label>
+        <input
+          id="task-due"
+          type="datetime-local"
+          {...register('dueDate')}
+          className="w-44 rounded bg-slate-800 px-3 py-2 text-sm text-foreground"
+        />
+
+        <label htmlFor="task-priority" className="sr-only">
+          Priority
+        </label>
+        <select
+          id="task-priority"
+          {...register('priority')}
+          className="w-32 rounded bg-slate-800 px-3 py-2 text-sm text-foreground"
+          defaultValue="none"
+        >
+          <option value="none">Priority</option>
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+        </select>
 
         <label htmlFor="task-list" className="sr-only">
           List
