@@ -22,20 +22,36 @@ export default function TaskList({ listId }: { listId?: string }) {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [query, setQuery] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   const deferredQuery = useDeferredValue(query);
 
-  async function fetchTasks() {
+  async function fetchTasks(signal?: AbortSignal) {
     setLoading(true);
+    setError(null);
     const queryParam = listId ? `?listId=${encodeURIComponent(listId)}` : '';
-    const res = await fetch(`/api/tasks${queryParam}`);
-    const data = await res.json();
-    setTasks(data.tasks || []);
-    setLoading(false);
+
+    try {
+      const res = await fetch(`/api/tasks${queryParam}`, { signal });
+      if (!res.ok) {
+        const body = await res.json();
+        throw new Error(body.error || 'Unable to load tasks');
+      }
+      const data = await res.json();
+      setTasks(data.tasks || []);
+    } catch (err: any) {
+      if (err.name !== 'AbortError') {
+        setError(err.message || 'Unable to load tasks');
+      }
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
-    fetchTasks();
+    const controller = new AbortController();
+    void fetchTasks(controller.signal);
+    return () => controller.abort();
   }, [listId]);
 
   useEffect(() => {
@@ -78,9 +94,22 @@ export default function TaskList({ listId }: { listId?: string }) {
         <TaskForm onCreate={fetchTasks} initialListId={listId} />
       </section>
 
+      {error ? (
+        <div className="rounded-3xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-100">
+          {error}
+        </div>
+      ) : null}
+
       <section className="space-y-3">
         {loading ? (
-          <div className="text-foreground/60">Loading…</div>
+          <div className="space-y-3">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div
+                key={index}
+                className="h-24 rounded-3xl bg-slate-800/70 animate-pulse"
+              />
+            ))}
+          </div>
         ) : filtered.length === 0 ? (
           <div className="rounded-2xl border border-border bg-card px-6 py-10 text-center">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-indigo-500/10 text-indigo-400 animate-pulse">
