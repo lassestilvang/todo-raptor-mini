@@ -40,6 +40,7 @@ async function createTaskLabels(taskId: string, labelIds: string[]) {
       for (const labelId of labelIds) {
         stmt.bind([taskId, labelId]);
         stmt.step();
+        stmt.reset();
       }
     } finally {
       try {
@@ -148,6 +149,7 @@ export async function createTask(payload: Partial<Task>): Promise<Task> {
 
     await createTaskLabels(id, payload.labels ?? []);
     await logActivity('task', id, 'created', { title: row.title });
+    const taskLabels = await getTaskLabelNames(id);
 
     // Return the inserted row using the constructed `row` to avoid brittle re-selects in SQL.js
     return {
@@ -163,7 +165,7 @@ export async function createTask(payload: Partial<Task>): Promise<Task> {
       updatedAt: row.updated_at,
       completedAt: row.completed_at,
       priority: mapPriorityValue(row.priority),
-      labels: payload.labels ?? [],
+      labels: taskLabels,
     } as any;
   }
 

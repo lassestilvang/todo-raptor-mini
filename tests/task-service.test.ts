@@ -23,7 +23,7 @@ if (canUseBetterSqlite3()) {
     it('persists labels when creating a task', async () => {
       const label = await createLabel({ name: 'Urgent' });
       const t = await createTask({ title: 'Labeled task', labels: [label.id] });
-      expect(t.labels).toEqual([label.id]);
+      expect(t.labels).toEqual(['Urgent']);
 
       const tasks = await getTasks();
       expect(tasks[0]?.labels).toEqual(['Urgent']);
@@ -50,7 +50,7 @@ if (canUseBetterSqlite3()) {
     it('persists labels when creating a task (sql.js)', async () => {
       const label = await createLabel({ name: 'Urgent' });
       const t = await createTask({ title: 'Labeled task', labels: [label.id] });
-      expect(t.labels).toEqual([label.id]);
+      expect(t.labels).toEqual(['Urgent']);
 
       const tasks = await getTasks();
       expect(tasks[0]?.labels).toEqual(['Urgent']);
