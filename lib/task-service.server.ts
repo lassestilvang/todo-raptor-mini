@@ -1,7 +1,7 @@
 import { Task } from './types';
 import { v4 as uuidv4 } from 'uuid';
 import { getDb } from './db';
-import { tasks } from '../db/schema';
+import { tasks, task_labels, labels } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { logActivity } from './activity-service.server';
 import { safeQuery, getPreparedOne } from './sqljs-utils.server';
@@ -28,6 +28,67 @@ function safeParse<T = any>(s: string | null | undefined): T | null {
     console.warn('safeParse: invalid JSON, returning null');
     return null;
   }
+}
+
+async function createTaskLabels(taskId: string, labelIds: string[]) {
+  if (!labelIds.length) return;
+  // @ts-ignore - runtime global
+  const conn: any = globalThis.__SQL_JS_CONN__ || null;
+  if (conn) {
+    const stmt = conn.prepare('INSERT INTO task_labels (task_id, label_id) VALUES (?, ?)');
+    try {
+      for (const labelId of labelIds) {
+        stmt.bind([taskId, labelId]);
+        stmt.step();
+      }
+    } finally {
+      try {
+        stmt.free();
+      } catch {
+        // ignore
+      }
+    }
+    return;
+  }
+
+  const _db = getDb();
+  if (!_db) {
+    throw new Error('Database not initialized');
+  }
+
+  const insertQuery: any = _db.insert(task_labels).values(
+    labelIds.map((labelId) => ({ task_id: taskId, label_id: labelId }))
+  );
+  if (insertQuery && typeof insertQuery.run === 'function') {
+    await insertQuery.run();
+  } else {
+    await insertQuery;
+  }
+}
+
+async function getTaskLabelNames(taskId: string): Promise<string[]> {
+  // @ts-ignore - runtime global
+  const conn: any = globalThis.__SQL_JS_CONN__ || null;
+  if (conn) {
+    const rows = safeQuery(
+      conn,
+      'SELECT l.name FROM task_labels tl JOIN labels l ON tl.label_id = l.id WHERE tl.task_id = ?',
+      [taskId]
+    );
+    return rows.map((row: any) => row.name).filter(Boolean);
+  }
+
+  const _db = getDb();
+  if (!_db) return [];
+
+  const rows = await _db
+    .select({ name: labels.name })
+    .from(task_labels)
+    .leftJoin(labels, eq(task_labels.label_id, labels.id))
+    .where(eq(task_labels.task_id, taskId))
+    .all();
+
+  return rows.map((row: any) => row.name).filter(Boolean);
 }
 
 // DB-backed task service using Drizzle (falls back to in-memory for edge cases)
@@ -85,6 +146,7 @@ export async function createTask(payload: Partial<Task>): Promise<Task> {
     stmt.step();
     stmt.free();
 
+    await createTaskLabels(id, payload.labels ?? []);
     await logActivity('task', id, 'created', { title: row.title });
 
     // Return the inserted row using the constructed `row` to avoid brittle re-selects in SQL.js
@@ -101,6 +163,7 @@ export async function createTask(payload: Partial<Task>): Promise<Task> {
       updatedAt: row.updated_at,
       completedAt: row.completed_at,
       priority: mapPriorityValue(row.priority),
+      labels: payload.labels ?? [],
     } as any;
   }
 
@@ -129,6 +192,7 @@ export async function createTask(payload: Partial<Task>): Promise<Task> {
     updatedAt: result.updated_at,
     completedAt: result.completed_at,
     priority: mapPriorityValue(result.priority),
+    labels: payload.labels ?? [],
   };
 }
 
@@ -141,20 +205,24 @@ export async function getTasks(listId?: string): Promise<Task[]> {
         ? 'SELECT id,list_id,title,notes,status,priority,due_date,estimate_minutes,actual_minutes,recurrence,created_at,updated_at,completed_at FROM tasks WHERE list_id = ? LIMIT 100'
         : 'SELECT id,list_id,title,notes,status,priority,due_date,estimate_minutes,actual_minutes,recurrence,created_at,updated_at,completed_at FROM tasks LIMIT 100';
       const raw = listId ? safeQuery(conn, sql, [listId]) : safeQuery(conn, sql);
-      return raw.map((r: any) => ({
-        id: r.id,
-        listId: r.list_id,
-        title: r.title,
-        notes: r.notes,
-        dueDate: r.due_date,
-        estimateMinutes: r.estimate_minutes,
-        actualMinutes: r.actual_minutes,
-        recurrence: safeParse(r.recurrence),
-        createdAt: r.created_at,
-        updatedAt: r.updated_at,
-        completedAt: r.completed_at,
-        priority: mapPriorityValue(r.priority),
-      }));
+      const tasksWithLabels = await Promise.all(
+        raw.map(async (r: any) => ({
+          id: r.id,
+          listId: r.list_id,
+          title: r.title,
+          notes: r.notes,
+          dueDate: r.due_date,
+          estimateMinutes: r.estimate_minutes,
+          actualMinutes: r.actual_minutes,
+          recurrence: safeParse(r.recurrence),
+          createdAt: r.created_at,
+          updatedAt: r.updated_at,
+          completedAt: r.completed_at,
+          priority: mapPriorityValue(r.priority),
+          labels: await getTaskLabelNames(r.id),
+        }))
+      );
+      return tasksWithLabels;
     } catch (e) {
       console.error('Error in getTasks (SQL.js):', (e as any)?.message ?? e);
       return [];
@@ -166,20 +234,23 @@ export async function getTasks(listId?: string): Promise<Task[]> {
   let query = _db.select().from(tasks);
   if (listId) query = query.where(eq(tasks.list_id, listId));
   const rows = await query.limit(100).all();
-  return rows.map((r: any) => ({
-    id: r.id,
-    listId: r.list_id,
-    title: r.title,
-    notes: r.notes,
-    dueDate: r.due_date,
-    estimateMinutes: r.estimate_minutes,
-    actualMinutes: r.actual_minutes,
-    recurrence: safeParse(r.recurrence),
-    createdAt: r.created_at,
-    updatedAt: r.updated_at,
-    completedAt: r.completed_at,
-    priority: mapPriorityValue(r.priority),
-  }));
+  return Promise.all(
+    rows.map(async (r: any) => ({
+      id: r.id,
+      listId: r.list_id,
+      title: r.title,
+      notes: r.notes,
+      dueDate: r.due_date,
+      estimateMinutes: r.estimate_minutes,
+      actualMinutes: r.actual_minutes,
+      recurrence: safeParse(r.recurrence),
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
+      completedAt: r.completed_at,
+      priority: mapPriorityValue(r.priority),
+      labels: await getTaskLabelNames(r.id),
+    }))
+  );
 }
 
 export async function getTaskById(id: string): Promise<Task | null> {
@@ -204,6 +275,7 @@ export async function getTaskById(id: string): Promise<Task | null> {
         updatedAt: r.updated_at,
         completedAt: r.completed_at,
         priority: mapPriorityValue(r.priority),
+        labels: await getTaskLabelNames(id),
       };
     } catch (e) {
       console.error('Error in getTaskById (SQL.js):', (e as any)?.message ?? e);
@@ -229,6 +301,7 @@ export async function getTaskById(id: string): Promise<Task | null> {
     updatedAt: r.updated_at,
     completedAt: r.completed_at,
     priority: mapPriorityValue(r.priority),
+    labels: await getTaskLabelNames(id),
   };
 }
 

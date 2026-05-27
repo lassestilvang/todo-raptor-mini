@@ -79,6 +79,18 @@ function TaskItem({ task, onUpdate }: { task: any; onUpdate?: () => void }) {
             {task.notes ? (
               <div className="mt-1 text-xs text-foreground/60 max-h-10 overflow-hidden">{task.notes}</div>
             ) : null}
+            {task.labels?.length ? (
+              <div className="mt-2 flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.15em] text-foreground/70">
+                {task.labels.map((label: string) => (
+                  <span
+                    key={label}
+                    className="rounded-full bg-slate-700/70 px-2.5 py-0.5 text-xs text-slate-100"
+                  >
+                    {label}
+                  </span>
+                ))}
+              </div>
+            ) : null}
           </div>
         </div>
 
