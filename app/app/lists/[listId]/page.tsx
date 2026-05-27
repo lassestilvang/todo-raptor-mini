@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import TaskList from '../../../../components/TaskList';
+import { getListById } from '../../../../lib/list-service.server';
 
 type Props = { params: { listId: string } };
 
@@ -9,9 +10,18 @@ export default async function ListPage({ params }: Props) {
 
   if (!listId) notFound();
 
+  const list = await getListById(listId);
+  if (!list) notFound();
+
   return (
     <div>
-      <h1 className="text-2xl font-semibold mb-2">{listId === 'inbox' ? 'Inbox' : listId}</h1>
+      <div className="mb-4 flex items-center gap-3">
+        <span className="text-3xl">{list.emoji ?? '📋'}</span>
+        <div>
+          <h1 className="text-2xl font-semibold">{list.title}</h1>
+          <p className="text-sm text-foreground/70">List ID: {list.id}</p>
+        </div>
+      </div>
       <TaskList listId={listId} />
     </div>
   );
