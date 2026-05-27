@@ -67,6 +67,31 @@ async function createTaskLabels(taskId: string, labelIds: string[]) {
   }
 }
 
+async function deleteTaskLabels(taskId: string) {
+  // @ts-ignore - runtime global
+  const conn: any = globalThis.__SQL_JS_CONN__ || null;
+  if (conn) {
+    const stmt = conn.prepare('DELETE FROM task_labels WHERE task_id = ?');
+    try {
+      stmt.bind([taskId]);
+      stmt.step();
+    } finally {
+      try {
+        stmt.free();
+      } catch {
+        // ignore
+      }
+    }
+    return;
+  }
+
+  const _db = getDb();
+  if (!_db) {
+    throw new Error('Database not initialized');
+  }
+  await _db.delete(task_labels).where(eq(task_labels.task_id, taskId)).run();
+}
+
 async function getTaskLabelNames(taskId: string): Promise<string[]> {
   // @ts-ignore - runtime global
   const conn: any = globalThis.__SQL_JS_CONN__ || null;
@@ -312,7 +337,18 @@ export async function updateTask(id: string, patch: Partial<Task>): Promise<Task
   const updates: any = { updated_at: now };
   if (patch.title !== undefined) updates.title = patch.title;
   if (patch.notes !== undefined) updates.notes = patch.notes;
+  if (patch.listId !== undefined) updates.list_id = patch.listId;
   if (patch.dueDate !== undefined) updates.due_date = patch.dueDate;
+  if (patch.priority !== undefined) {
+    updates.priority =
+      patch.priority === 'high'
+        ? 2
+        : patch.priority === 'medium'
+        ? 1
+        : patch.priority === 'low'
+        ? -1
+        : 0;
+  }
   if (patch.estimateMinutes !== undefined) updates.estimate_minutes = patch.estimateMinutes;
   if (patch.actualMinutes !== undefined) updates.actual_minutes = patch.actualMinutes;
   if (patch.completedAt !== undefined) updates.completed_at = patch.completedAt;
@@ -321,6 +357,12 @@ export async function updateTask(id: string, patch: Partial<Task>): Promise<Task
   const _db = getDb();
   if (!_db) throw new Error('Database not initialized');
   await _db.update(tasks).set(updates).where(eq(tasks.id, id));
+
+  if (patch.labels !== undefined) {
+    await deleteTaskLabels(id);
+    await createTaskLabels(id, patch.labels ?? []);
+  }
+
   return getTaskById(id);
 }
 

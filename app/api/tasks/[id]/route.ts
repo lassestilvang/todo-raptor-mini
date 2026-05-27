@@ -5,6 +5,11 @@ import { z } from 'zod';
 
 const patchSchema = z.object({
   completed: z.boolean().optional(),
+  notes: z.string().optional(),
+  dueDate: z.string().optional(),
+  priority: z.enum(['none', 'low', 'medium', 'high']).optional(),
+  listId: z.string().optional(),
+  labels: z.array(z.string()).optional(),
 });
 
 export async function GET(req: Request, { params }: { params: any }) {
@@ -39,7 +44,14 @@ export async function PATCH(req: Request, { params }: { params: any }) {
     const body = await req.json();
     const parsed = patchSchema.parse(body);
     const completedAt = parsed.completed ? new Date().toISOString() : null;
-    const task = await updateTask(id, { completedAt });
+    const task = await updateTask(id, {
+      completedAt,
+      notes: parsed.notes,
+      dueDate: parsed.dueDate,
+      priority: parsed.priority,
+      listId: parsed.listId,
+      labels: parsed.labels,
+    });
 
     if (!task) {
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });

@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'bun:test';
 import { canUseBetterSqlite3, initBetterSqliteMemoryDb, initSqlJsDb } from './setup-db';
 import { createTask, getTasks, getTaskById, updateTask, deleteTask, clearTasks } from '../lib/task-service.server';
+import { createLabel } from '../lib/label-service.server';
 import { setDb } from '../lib/db';
 
 if (canUseBetterSqlite3()) {
@@ -42,6 +43,24 @@ if (canUseBetterSqlite3()) {
       expect(await getTaskById(task.id)).toBeNull();
       expect((await getTasks()).length).toBe(0);
     });
+
+    it('updates task labels and priority', async () => {
+      const label = await createLabel({ name: 'Release' });
+      const task = await createTask({ title: 'Prepare release', priority: 'low', labels: [] });
+
+      const updated = await updateTask(task.id, {
+        priority: 'high',
+        labels: [label.id],
+      });
+
+      expect(updated).not.toBeNull();
+      expect(updated?.priority).toBe('high');
+      expect(updated?.labels).toEqual(['Release']);
+
+      const fetched = await getTaskById(task.id);
+      expect(fetched?.labels).toEqual(['Release']);
+      expect(fetched?.priority).toBe('high');
+    });
   });
 } else {
   describe('task service extended operations (sql.js)', () => {
@@ -81,6 +100,24 @@ if (canUseBetterSqlite3()) {
       await deleteTask(task.id);
       expect(await getTaskById(task.id)).toBeNull();
       expect((await getTasks()).length).toBe(0);
+    });
+
+    it('updates task labels and priority (sql.js)', async () => {
+      const label = await createLabel({ name: 'Release' });
+      const task = await createTask({ title: 'Prepare release', priority: 'low', labels: [] });
+
+      const updated = await updateTask(task.id, {
+        priority: 'high',
+        labels: [label.id],
+      });
+
+      expect(updated).not.toBeNull();
+      expect(updated?.priority).toBe('high');
+      expect(updated?.labels).toEqual(['Release']);
+
+      const fetched = await getTaskById(task.id);
+      expect(fetched?.labels).toEqual(['Release']);
+      expect(fetched?.priority).toBe('high');
     });
   });
 }
