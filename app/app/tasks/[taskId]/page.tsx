@@ -166,7 +166,7 @@ export default function TaskDetail({ params }: Props) {
         <aside className="rounded-3xl border border-border bg-card p-5 text-sm text-foreground/80">
           <p>
             <span className="font-semibold text-foreground">List:</span>{' '}
-            {task.listId ?? 'Inbox'}
+            {task.listId === 'inbox' ? 'Inbox' : task.listId ?? 'Inbox'}
           </p>
           {task.dueDate ? (
             <p className="mt-3">

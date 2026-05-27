@@ -44,7 +44,7 @@ export default function TaskForm({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         ...data,
-        listId: data.listId ?? initialListId ?? 'inbox',
+        listId: data.listId || initialListId || 'inbox',
         labels: data.labels ? (Array.isArray(data.labels) ? data.labels : [data.labels]) : [],
       }),
     });
@@ -104,7 +104,7 @@ export default function TaskForm({
           className="px-3 py-2 rounded bg-slate-800"
           defaultValue={initialListId ?? 'inbox'}
         >
-          <option value="">Inbox</option>
+          <option value="inbox">Inbox</option>
           {lists.map((l) => (
             <option key={l.id} value={l.id}>
               {l.title}
