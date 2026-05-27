@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import React, { useEffect, useState } from 'react';
+import { useCachedResource } from '../lib/client-cache';
 import Lists from './Lists';
 import CreateList from './CreateList';
 import Labels from './Labels';
@@ -33,22 +33,8 @@ function NavLink({ href, children }: { href: string; children: React.ReactNode }
 }
 
 export default function Sidebar() {
-  const [overdue, setOverdue] = useState<number | null>(null);
-
-  async function fetchStats() {
-    try {
-      const res = await fetch('/api/stats');
-      const data = await res.json();
-      setOverdue(data.overdueCount);
-    } catch (_err) {
-      // ignore
-      void _err;
-    }
-  }
-
-  useEffect(() => {
-    fetchStats();
-  }, []);
+  const stats = useCachedResource<{ overdueCount: number }>('stats');
+  const overdue = stats.overdueCount ?? 0;
 
   return (
     <nav className="flex flex-col gap-6">

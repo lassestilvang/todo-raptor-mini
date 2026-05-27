@@ -2,9 +2,15 @@
 
 import { useSyncExternalStore } from 'react';
 
-type ResourceKey = 'lists' | 'labels';
+type ResourceKey = 'lists' | 'labels' | 'stats';
 
-type Snapshot = unknown[];
+type Snapshot = unknown;
+
+const defaultSnapshots: Record<ResourceKey, unknown> = {
+  lists: [],
+  labels: [],
+  stats: { overdueCount: 0 },
+};
 
 const cache = new Map<ResourceKey, Snapshot>();
 const listeners = new Map<ResourceKey, Set<() => void>>();
@@ -21,7 +27,7 @@ function getListeners(key: ResourceKey) {
 async function fetchResource(key: ResourceKey) {
   const res = await fetch(`/api/${key}`);
   const data = await res.json();
-  const value = Array.isArray(data[key]) ? data[key] : [];
+  const value = key === 'stats' ? data : Array.isArray(data[key]) ? data[key] : [];
   cache.set(key, value);
   getListeners(key).forEach((listener) => listener());
   return value;
@@ -32,7 +38,7 @@ export function invalidateResource(key: ResourceKey) {
   void fetchResource(key);
 }
 
-export function useCachedResource(key: ResourceKey) {
+export function useCachedResource<T = unknown>(key: ResourceKey) {
   const subscribe = (callback: () => void) => {
     const set = getListeners(key);
     set.add(callback);
@@ -43,8 +49,8 @@ export function useCachedResource(key: ResourceKey) {
     if (!cache.has(key)) {
       void fetchResource(key);
     }
-    return (cache.get(key) ?? []) as Snapshot;
+    return (cache.get(key) ?? defaultSnapshots[key]) as T;
   };
 
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot) as Snapshot;
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot) as T;
 }
