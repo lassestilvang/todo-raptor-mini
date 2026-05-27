@@ -9,19 +9,21 @@ const dateFormatter = new Intl.DateTimeFormat(undefined, {
   minute: '2-digit',
 });
 
-function TaskItem({ task }: { task: any }) {
-  // Guard framer-motion import to avoid server-side bundler issues
-  const MotionWrapper = React.useMemo(() => {
-    try {
-      const fm = require('framer-motion');
-      return fm.motion?.div || ((props: any) => <div {...props} />);
-    } catch (_err) {
-      void _err;
-      return (props: any) => <div {...props} />;
-    }
-  }, []);
+let MotionDiv: any;
+function getMotionDiv() {
+  if (MotionDiv) return MotionDiv;
+  try {
+    const fm = require('framer-motion');
+    MotionDiv = fm.motion?.div || ((props: any) => <div {...props} />);
+  } catch (_err) {
+    void _err;
+    MotionDiv = (props: any) => <div {...props} />;
+  }
+  return MotionDiv;
+}
 
-  const MotionDiv: any = MotionWrapper;
+function TaskItem({ task }: { task: any }) {
+  const MotionComponent = getMotionDiv();
   const dueDate = task.dueDate ? new Date(task.dueDate) : null;
   const now = new Date();
   const isOverdue = dueDate ? dueDate < now : false;
@@ -30,7 +32,7 @@ function TaskItem({ task }: { task: any }) {
   const dueLabel = dueDate ? dateFormatter.format(dueDate) : null;
 
   return (
-    <MotionDiv
+    <MotionComponent
       initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
@@ -66,7 +68,7 @@ function TaskItem({ task }: { task: any }) {
           ) : null}
         </div>
       </div>
-    </MotionDiv>
+    </MotionComponent>
   );
 }
 

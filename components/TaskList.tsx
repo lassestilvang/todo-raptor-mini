@@ -1,15 +1,29 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import TaskItem from './TaskItem';
 import TaskForm from './TaskForm';
 import SearchBar from './SearchBar';
+
+let cachedFuse: any = null;
+function getFuse() {
+  if (cachedFuse) return cachedFuse;
+  try {
+    cachedFuse = require('fuse.js');
+    return cachedFuse;
+  } catch (_err) {
+    void _err;
+    return null;
+  }
+}
 
 export default function TaskList({ listId }: { listId?: string }) {
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [query, setQuery] = useState('');
+
+  const deferredQuery = useDeferredValue(query);
 
   async function fetchTasks() {
     setLoading(true);
@@ -30,17 +44,17 @@ export default function TaskList({ listId }: { listId?: string }) {
   }, [search]);
 
   const filtered = useMemo(() => {
-    if (!query) return tasks;
+    if (!deferredQuery) return tasks;
     try {
-      // lazy import fuse to keep bundle light
-      const Fuse = require('fuse.js');
+      const Fuse = getFuse();
+      if (!Fuse) throw new Error('Fuse unavailable');
       const fuse = new Fuse(tasks, { keys: ['title', 'notes'], threshold: 0.3 });
-      return fuse.search(query).map((r: any) => r.item);
+      return fuse.search(deferredQuery).map((r: any) => r.item);
     } catch (_err) {
       void _err;
-      return tasks.filter((t) => t.title.toLowerCase().includes(query.toLowerCase()));
+      return tasks.filter((t) => t.title.toLowerCase().includes(deferredQuery.toLowerCase()));
     }
-  }, [tasks, query]);
+  }, [tasks, deferredQuery]);
 
   return (
     <div className="space-y-5">
