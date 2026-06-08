@@ -2,7 +2,7 @@
 
 A modern daily task planner built with Next.js 16, Bun, TypeScript, Tailwind CSS, and Drizzle + SQLite.
 
-Quick start
+## Quick start
 
 1. Install Bun: https://bun.sh/
 2. Install dependencies: `bun install`
@@ -16,7 +16,7 @@ Quick start
 7. Run coverage: `bun run test:coverage`
 8. Run E2E tests (Playwright): `npx playwright test`
 
-Project structure
+## Project structure
 
 - `app/` — Next.js App Router pages and layouts
 - `components/` — UI components (shadcn/ui-compatible patterns)
@@ -24,7 +24,7 @@ Project structure
 - `db/` — migrations and schema
 - `tests/` — unit and E2E tests
 
-Features
+## Features
 
 - Lists (Inbox + custom) with color & emoji
 - Tasks: title, notes, date, deadline, reminders, estimate, actuals, labels, priority, subtasks, recurrence, attachments, activity log
@@ -32,4 +32,31 @@ Features
 - Search (fuzzy) and filters
 - Local-first storage (SQLite) with storage abstraction for attachments (local, S3-ready)
 
-See `.github/workflows/ci.yml` for CI details — CI now runs tests under Bun and performs a Node init check that runs `scripts/init-db.node.js` to validate native `better-sqlite3` initialization (or `sql.js` fallback).
+## Development
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed development setup, architecture overview, and contribution guidelines.
+
+See [SECURITY.md](./SECURITY.md) for security policies and vulnerability reporting.
+
+### Code Quality
+
+- Linting: `bun run lint` (ESLint with strict TypeScript rules)
+- Testing: `bun test` (Bun test runner with unit tests)
+- E2E: `npx playwright test` (Playwright for browser testing)
+- Type checking: `bun run build` (TypeScript strict mode)
+
+### Architecture Highlights
+
+- **Type-safe APIs**: Zod schema validation with consistent error handling
+- **Generic resource caching**: Type-safe client-side cache with inference-based types
+- **Server-side services**: Clean separation of business logic in `lib/*.server.ts`
+- **Reusable utilities**: Centralized API error handling and params resolution
+
+## License
+
+MIT
+
+---
+
+See `.github/workflows/ci.yml` for CI details — CI runs tests under Bun and validates native `better-sqlite3` initialization (or `sql.js` fallback).
+
