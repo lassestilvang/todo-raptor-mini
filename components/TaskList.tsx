@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import type { Task } from '../lib/types';
 import TaskItem from './TaskItem';
 import TaskForm from './TaskForm';
 import SearchBar from './SearchBar';
@@ -18,7 +19,7 @@ function getFuse() {
 }
 
 export default function TaskList({ listId }: { listId?: string }) {
-  const [tasks, setTasks] = useState<any[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [query, setQuery] = useState('');
