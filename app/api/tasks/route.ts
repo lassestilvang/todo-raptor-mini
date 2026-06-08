@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getTasks, createTask } from '../../../lib/task-service.server';
 import { ensureSqlJsInitialized } from '../../../lib/db';
+import { getErrorStatusAndMessage } from '../../../lib/api-utils.server';
 import { z } from 'zod';
 
 const createTaskSchema = z.object({
@@ -27,7 +28,8 @@ export async function POST(req: Request) {
     const parsed = createTaskSchema.parse(body);
     const task = await createTask(parsed);
     return NextResponse.json({ task }, { status: 201 });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || 'Invalid input' }, { status: 400 });
+  } catch (err) {
+    const { status, message } = getErrorStatusAndMessage(err);
+    return NextResponse.json({ error: message }, { status });
   }
 }

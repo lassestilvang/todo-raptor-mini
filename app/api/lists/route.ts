@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createList, getLists } from '../../../lib/list-service.server';
+import { getErrorStatusAndMessage } from '../../../lib/api-utils.server';
 import { z } from 'zod';
 
 const createSchema = z.object({
@@ -19,7 +20,8 @@ export async function POST(req: Request) {
     const parsed = createSchema.parse(body);
     const list = await createList(parsed);
     return NextResponse.json({ list }, { status: 201 });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || 'Invalid' }, { status: 400 });
+  } catch (err) {
+    const { status, message } = getErrorStatusAndMessage(err);
+    return NextResponse.json({ error: message }, { status });
   }
 }

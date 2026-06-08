@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getTaskById, updateTask } from '../../../../lib/task-service.server';
 import { ensureSqlJsInitialized } from '../../../../lib/db';
-import { resolveParams } from '../../../../lib/api-utils.server';
+import { resolveParams, getErrorStatusAndMessage } from '../../../../lib/api-utils.server';
 import { z } from 'zod';
 
 const patchSchema = z.object({
@@ -55,7 +55,8 @@ export async function PATCH(req: Request, { params }: { params: any }) {
     }
 
     return NextResponse.json({ task });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || 'Invalid request' }, { status: 400 });
+  } catch (err) {
+    const { status, message } = getErrorStatusAndMessage(err);
+    return NextResponse.json({ error: message }, { status });
   }
 }
