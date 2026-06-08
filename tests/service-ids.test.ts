@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'bun:test';
 import { canUseBetterSqlite3, initBetterSqliteMemoryDb, initSqlJsDb } from './setup-db';
-import { createList, getLists, getListById } from '../lib/list-service.server';
-import { createLabel, getLabels, getLabelById } from '../lib/label-service.server';
+import { createList, getListById } from '../lib/list-service.server';
+import { createLabel, getLabelById } from '../lib/label-service.server';
 import { setDb } from '../lib/db';
 
 if (canUseBetterSqlite3()) {
