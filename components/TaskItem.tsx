@@ -12,18 +12,18 @@ const dateFormatter = new Intl.DateTimeFormat(undefined, {
 });
 
 type MotionComponent = React.ComponentType<any>;
-let MotionDiv: MotionComponent | undefined;
+let MotionDiv: MotionComponent | null = null;
 
 function getMotionDiv(): MotionComponent {
   if (MotionDiv) return MotionDiv;
   try {
     const fm = require('framer-motion');
-    MotionDiv = fm.motion?.div || ((props) => <div {...props} />);
+    MotionDiv = fm.motion?.div || ((props: any) => <div {...props} />);
   } catch (_err) {
     void _err;
-    MotionDiv = (props) => <div {...props} />;
+    MotionDiv = (props: any) => <div {...props} />;
   }
-  return MotionDiv;
+  return MotionDiv as MotionComponent;
 }
 
 function TaskItem({ task, onUpdate }: { task: Task; onUpdate?: () => void }) {
