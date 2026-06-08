@@ -7,6 +7,13 @@ export interface List {
   emoji?: string;
 }
 
+export interface Label {
+  id: string;
+  name: string;
+  color?: string;
+  icon?: string;
+}
+
 export interface Subtask {
   id: string;
   taskId: string;

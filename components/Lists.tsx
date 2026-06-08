@@ -8,7 +8,7 @@ export default function Lists() {
 
   return (
     <div className="flex flex-col gap-1">
-      {lists.map((l: any) => (
+      {lists.map((l) => (
         <Link
           key={l.id}
           href={`/app/lists/${l.id}`}

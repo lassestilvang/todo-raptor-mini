@@ -1,8 +1,15 @@
 'use client';
 
 import { useSyncExternalStore } from 'react';
+import type { List, Label } from './types';
 
 type ResourceKey = 'lists' | 'labels' | 'stats';
+
+interface ResourceTypeMap {
+  lists: List[];
+  labels: Label[];
+  stats: { overdueCount: number };
+}
 
 type Snapshot = unknown;
 
@@ -38,7 +45,7 @@ export function invalidateResource(key: ResourceKey) {
   void fetchResource(key);
 }
 
-export function useCachedResource<T = unknown>(key: ResourceKey) {
+export function useCachedResource<K extends ResourceKey>(key: K): ResourceTypeMap[K] {
   const subscribe = (callback: () => void) => {
     const set = getListeners(key);
     set.add(callback);
@@ -49,8 +56,8 @@ export function useCachedResource<T = unknown>(key: ResourceKey) {
     if (!cache.has(key)) {
       void fetchResource(key);
     }
-    return (cache.get(key) ?? defaultSnapshots[key]) as T;
+    return (cache.get(key) ?? defaultSnapshots[key]) as ResourceTypeMap[K];
   };
 
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot) as T;
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot) as ResourceTypeMap[K];
 }

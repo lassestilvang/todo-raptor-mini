@@ -33,7 +33,7 @@ function NavLink({ href, children }: { href: string; children: React.ReactNode }
 }
 
 export default function Sidebar() {
-  const stats = useCachedResource<{ overdueCount: number }>('stats');
+  const stats = useCachedResource('stats');
   const overdue = stats.overdueCount ?? 0;
 
   return (
