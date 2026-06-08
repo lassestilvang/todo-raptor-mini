@@ -1,8 +1,22 @@
 import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
 import TaskList from '../../../../components/TaskList';
 import { getListById } from '../../../../lib/list-service.server';
 
 type Props = { params: { listId: string } };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { listId } = await params;
+  if (!listId) return { title: 'List not found' };
+
+  const list = await getListById(listId);
+  if (!list) return { title: 'List not found' };
+
+  return {
+    title: `${list.emoji ?? '📋'} ${list.title}`,
+    description: `Tasks in ${list.title}`,
+  };
+}
 
 export default async function ListPage({ params }: Props) {
   // `params` may be a Promise in Next.js 16 dynamic routes, so unwrap it
@@ -26,3 +40,4 @@ export default async function ListPage({ params }: Props) {
     </div>
   );
 }
+
