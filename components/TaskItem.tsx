@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import React from 'react';
+import type { Task } from '../lib/types';
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
   month: 'short',
@@ -10,20 +11,22 @@ const dateFormatter = new Intl.DateTimeFormat(undefined, {
   minute: '2-digit',
 });
 
-let MotionDiv: any;
-function getMotionDiv() {
+type MotionComponent = React.ComponentType<any>;
+let MotionDiv: MotionComponent | undefined;
+
+function getMotionDiv(): MotionComponent {
   if (MotionDiv) return MotionDiv;
   try {
     const fm = require('framer-motion');
-    MotionDiv = fm.motion?.div || ((props: any) => <div {...props} />);
+    MotionDiv = fm.motion?.div || ((props) => <div {...props} />);
   } catch (_err) {
     void _err;
-    MotionDiv = (props: any) => <div {...props} />;
+    MotionDiv = (props) => <div {...props} />;
   }
   return MotionDiv;
 }
 
-function TaskItem({ task, onUpdate }: { task: any; onUpdate?: () => void }) {
+function TaskItem({ task, onUpdate }: { task: Task; onUpdate?: () => void }) {
   const [isUpdating, setIsUpdating] = React.useState(false);
   const MotionComponent = getMotionDiv();
   const dueDate = task.dueDate ? new Date(task.dueDate) : null;
