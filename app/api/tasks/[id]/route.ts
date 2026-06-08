@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getTaskById, updateTask } from '../../../../lib/task-service.server';
 import { ensureSqlJsInitialized } from '../../../../lib/db';
+import { resolveParams } from '../../../../lib/api-utils.server';
 import { z } from 'zod';
 
 const patchSchema = z.object({
@@ -13,9 +14,7 @@ const patchSchema = z.object({
 });
 
 export async function GET(req: Request, { params }: { params: any }) {
-  const resolvedParams =
-    params && typeof (params as any).then === 'function' ? await params : params;
-  const id = resolvedParams?.id;
+  const { id } = await resolveParams(params);
 
   if (!id) {
     return NextResponse.json({ error: 'Task ID required' }, { status: 400 });
@@ -32,9 +31,7 @@ export async function GET(req: Request, { params }: { params: any }) {
 }
 
 export async function PATCH(req: Request, { params }: { params: any }) {
-  const resolvedParams =
-    params && typeof (params as any).then === 'function' ? await params : params;
-  const id = resolvedParams?.id;
+  const { id } = await resolveParams(params);
 
   if (!id) {
     return NextResponse.json({ error: 'Task ID required' }, { status: 400 });
