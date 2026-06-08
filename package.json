@@ -2,6 +2,16 @@
   "name": "todo-raptor-mini",
   "version": "0.1.0",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lassestilvang/todo-raptor-mini.git"
+  },
+  "bugs": {
+    "url": "https://github.com/lassestilvang/todo-raptor-mini/issues"
+  },
+  "engines": {
+    "bun": ">=1.0.0"
+  },
   "scripts": {
     "dev": "bun --bun next dev",
     "build": "bun --bun next build",
