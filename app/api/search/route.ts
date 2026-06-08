@@ -3,10 +3,16 @@ import Fuse from 'fuse.js';
 import { getDb } from '../../../lib/db';
 import { tasks } from '../../../db/schema';
 
+const MAX_QUERY_LENGTH = 1000;
+
 export async function GET(req: Request) {
   const url = new URL(req.url);
-  const q = url.searchParams.get('q') || '';
+  let q = url.searchParams.get('q') || '';
+  
+  // Trim and validate query length to prevent DoS
+  q = q.trim().slice(0, MAX_QUERY_LENGTH);
   if (!q) return NextResponse.json({ results: [] });
+  
   const _db = getDb();
   // @ts-ignore - runtime global
   const conn: any = (globalThis as any).__SQL_JS_CONN__ || null;
@@ -25,3 +31,4 @@ export async function GET(req: Request) {
   const results = fuse.search(q).map((r) => r.item);
   return NextResponse.json({ results });
 }
+
