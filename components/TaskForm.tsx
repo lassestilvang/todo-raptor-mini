@@ -8,7 +8,7 @@ const schema = z.object({
   title: z.string().min(1),
   notes: z.string().optional(),
   listId: z.string().optional(),
-  labels: z.any().optional(),
+  labels: z.array(z.string()).optional(),
   dueDate: z.string().optional(),
   priority: z.enum(['none', 'low', 'medium', 'high']).optional(),
 });
