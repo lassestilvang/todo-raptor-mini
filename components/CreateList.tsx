@@ -11,12 +11,13 @@ const schema = z.object({
   emoji: z.string().optional(),
   color: z.string().optional(),
 });
+type ListFormData = z.infer<typeof schema>;
 
 export default function CreateList() {
-  const { register, handleSubmit, reset } = useForm({ resolver: zodResolver(schema) });
+  const { register, handleSubmit, reset } = useForm<ListFormData>({ resolver: zodResolver(schema) });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  async function onSubmit(data: any) {
+  async function onSubmit(data: ListFormData) {
     setIsSubmitting(true);
     await fetch('/api/lists', {
       method: 'POST',

@@ -11,12 +11,13 @@ const schema = z.object({
   color: z.string().optional(),
   icon: z.string().optional(),
 });
+type LabelFormData = z.infer<typeof schema>;
 
 export default function CreateLabel() {
-  const { register, handleSubmit, reset } = useForm({ resolver: zodResolver(schema) });
+  const { register, handleSubmit, reset } = useForm<LabelFormData>({ resolver: zodResolver(schema) });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  async function onSubmit(data: any) {
+  async function onSubmit(data: LabelFormData) {
     setIsSubmitting(true);
     await fetch('/api/labels', {
       method: 'POST',
