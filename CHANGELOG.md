@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.0 - Type safety and error handling improvements (unreleased)
+
+- Improved TypeScript type safety across components (removed 'any' types)
+- Added proper type inference for cached resources (Label, List types)
+- Created API utilities for error handling and params resolution
+- Enhanced documentation (CONTRIBUTING.md, SECURITY.md)
+- Consistent error responses across API routes
+- Test isolation improvements to prevent DOM leakage
+
 ## 0.1.0 - Initial release
 
 - Project scaffolding: Bun, Next.js 16 (App Router), TypeScript, Tailwind
