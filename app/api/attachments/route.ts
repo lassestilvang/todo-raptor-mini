@@ -52,6 +52,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'No file' }, { status: 400 });
   }
 
+  // Validate file size (max 50MB)
+  const MAX_FILE_SIZE = 50 * 1024 * 1024;
+  if (file.size > MAX_FILE_SIZE) {
+    return NextResponse.json(
+      { error: 'File too large (max 50MB)' },
+      { status: 400 }
+    );
+  }
+
   // Validate file type (allow common safe types).
   // Some environments append charset values like text/plain;charset=utf-8.
   const allowedMimeTypes = [
