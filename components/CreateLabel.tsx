@@ -33,7 +33,7 @@ export default function CreateLabel() {
       <div className="flex gap-2">
         <input
           {...register('icon')}
-          placeholder="Icon"
+          placeholder="Icon (label)"
           disabled={isSubmitting}
           className="w-14 rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-foreground/50 focus:outline-none focus:ring-2 focus:ring-indigo-400 disabled:cursor-not-allowed disabled:opacity-50"
         />

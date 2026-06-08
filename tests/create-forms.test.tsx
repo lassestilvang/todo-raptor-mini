@@ -6,7 +6,7 @@ import CreateList from '../components/CreateList';
 describe('Create form components', () => {
   it('renders CreateLabel form', () => {
     const { getByPlaceholderText, container } = render(<CreateLabel />);
-    expect(getByPlaceholderText('Icon')).toBeTruthy();
+    expect(getByPlaceholderText('Icon (label)')).toBeTruthy();
     expect(getByPlaceholderText('Label')).toBeTruthy();
     const button = container.querySelector('button');
     expect(button?.textContent).toBe('Add');
@@ -14,7 +14,7 @@ describe('Create form components', () => {
 
   it('renders CreateList form', () => {
     const { getByPlaceholderText, container } = render(<CreateList />);
-    expect(getByPlaceholderText('Emoji')).toBeTruthy();
+    expect(getByPlaceholderText('Emoji (list)')).toBeTruthy();
     expect(getByPlaceholderText('New list')).toBeTruthy();
     const button = container.querySelector('button');
     expect(button?.textContent).toBe('Add');
