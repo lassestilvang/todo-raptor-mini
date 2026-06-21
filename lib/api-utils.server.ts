@@ -1,7 +1,3 @@
-import type { ZodError } from 'zod';
-
-type ZodIssue = { path: (string | number)[]; message: string };
-
 export async function resolveParams<T extends Record<string, string | undefined>>(
   params: T | Promise<T>
 ): Promise<T> {
@@ -10,9 +6,9 @@ export async function resolveParams<T extends Record<string, string | undefined>
 
 export function getErrorStatusAndMessage(err: unknown): { status: number; message: string } {
   if (err instanceof Error && err.name === 'ZodError') {
-    const zodErr = err as ZodError;
+    const zodErr = err as { errors?: Array<{ path: (string | number)[]; message: string }> };
     const messages =
-      zodErr.errors.map((e: ZodIssue) => `${e.path.join('.')}: ${e.message}`).join('; ') ||
+      zodErr.errors?.map((e) => `${e.path.join('.')}: ${e.message}`).join('; ') ||
       'Validation failed';
     return { status: 400, message: messages };
   }
