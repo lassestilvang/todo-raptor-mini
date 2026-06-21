@@ -1,9 +1,8 @@
 import { drizzle } from 'drizzle-orm/better-sqlite3';
-import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import path from 'path';
-import type * as schema from '../db/schema';
 
-let _db: BetterSQLite3Database<typeof schema> | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let _db: any = null;
 
 type DatabaseInstance = ReturnType<typeof import('better-sqlite3')>;
 
@@ -182,7 +181,7 @@ export function getDb() {
   return _db;
 }
 
-export function setDb(dbInstance: BetterSQLite3Database<typeof schema> | null) {
+export function setDb(dbInstance: unknown) {
   _db = dbInstance;
 }
 
