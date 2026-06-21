@@ -21,6 +21,28 @@ export interface Subtask {
   done: boolean;
 }
 
+export type RecurrenceFrequency = 'daily' | 'weekdays' | 'weekly' | 'monthly' | 'yearly';
+
+export interface Recurrence {
+  frequency: RecurrenceFrequency;
+  interval?: number;
+  daysOfWeek?: number[];
+  dayOfMonth?: number;
+  month?: number;
+  endDate?: string;
+  count?: number;
+}
+
+export interface Attachment {
+  id: string;
+  taskId: string;
+  filename: string;
+  size: number;
+  mime: string;
+  storageKey: string;
+  createdAt: string;
+}
+
 export interface Task {
   id: string;
   listId?: string;
@@ -34,8 +56,8 @@ export interface Task {
   labels?: string[];
   priority?: Priority;
   subtasks?: Subtask[];
-  recurrence?: any;
-  attachments?: any[];
+  recurrence?: Recurrence | null;
+  attachments?: Attachment[];
   createdAt?: string;
   updatedAt?: string;
   completedAt?: string | null;

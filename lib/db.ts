@@ -36,7 +36,9 @@ try {
   const warnedKey = '__todo_db_init_warning_shown__';
   if (!(globalThis as any)[warnedKey]) {
     console.warn('Warning: default DB initialization skipped (better-sqlite3 not available).');
-    console.warn('Attempting to initialize an SQL.js in-memory connection as a fallback (if installed)...');
+    console.warn(
+      'Attempting to initialize an SQL.js in-memory connection as a fallback (if installed)...'
+    );
 
     // Create a fallback initialization promise so API routes or other callers can await DB readiness
     let fallbackInit: Promise<void> | null = null;
@@ -48,7 +50,8 @@ try {
         const initSqlJs = require('sql.js');
         // When used in CI or other environments, locateFile helper should point to node_modules
         const SQL = await initSqlJs({
-          locateFile: (file: string) => path.join(process.cwd(), 'node_modules', 'sql.js', 'dist', file),
+          locateFile: (file: string) =>
+            path.join(process.cwd(), 'node_modules', 'sql.js', 'dist', file),
         });
         const fs = require('fs');
         const dbPath = process.env.DATABASE_URL || path.join(process.cwd(), 'db', 'data.db');
@@ -65,7 +68,10 @@ try {
           try {
             const migrationsDir = path.join(process.cwd(), 'db', 'migrations');
             if (fs.existsSync(migrationsDir)) {
-              const files = fs.readdirSync(migrationsDir).filter((f: string) => f.endsWith('.sql')).sort();
+              const files = fs
+                .readdirSync(migrationsDir)
+                .filter((f: string) => f.endsWith('.sql'))
+                .sort();
               for (const file of files) {
                 const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
                 conn.exec(sql);
@@ -75,35 +81,79 @@ try {
 
             // Seed minimal sample data so tests relying on seeded rows pass
             try {
-              const t = conn.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='tasks'");
+              const t = conn.exec(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='tasks'"
+              );
               const hasTasksTable = (t && t[0] && t[0].values && t[0].values.length) || 0;
               if (hasTasksTable) {
-                const countRes = conn.exec("SELECT COUNT(*) as c FROM tasks");
-                const count = (countRes && countRes[0] && countRes[0].values && countRes[0].values[0] && countRes[0].values[0][0]) || 0;
+                const countRes = conn.exec('SELECT COUNT(*) as c FROM tasks');
+                const count =
+                  (countRes &&
+                    countRes[0] &&
+                    countRes[0].values &&
+                    countRes[0].values[0] &&
+                    countRes[0].values[0][0]) ||
+                  0;
                 if (!count) {
                   console.info('Seeding sample data into sql.js DB (lib/db fallback)');
-                  conn.exec("INSERT OR IGNORE INTO lists (id,title,emoji,color) VALUES ('inbox','Inbox','📥','#64748b');");
-                  conn.exec("INSERT OR IGNORE INTO lists (id,title,emoji,color) VALUES ('work','Work','💼','#7c3aed');");
-                  conn.exec("INSERT INTO tasks (id,list_id,title,notes) VALUES ('welcome','inbox','Welcome to Todo Raptor','This is your inbox task. Edit or delete it.');");
-                  conn.exec("INSERT INTO tasks (id,list_id,title,notes) VALUES ('plan','work','Plan project','Create milestones and schedule user interviews.');");
+                  const seedStmt = conn.prepare(
+                    'INSERT OR IGNORE INTO lists (id,title,emoji,color) VALUES (?, ?, ?, ?)'
+                  );
+                  seedStmt.bind(['inbox', 'Inbox', '📥', '#64748b']);
+                  seedStmt.step();
+                  seedStmt.reset();
+                  seedStmt.bind(['work', 'Work', '💼', '#7c3aed']);
+                  seedStmt.step();
+                  seedStmt.reset();
+                  seedStmt.free();
+                  const taskStmt = conn.prepare(
+                    'INSERT INTO tasks (id,list_id,title,notes) VALUES (?, ?, ?, ?)'
+                  );
+                  taskStmt.bind([
+                    'welcome',
+                    'inbox',
+                    'Welcome to Todo Raptor',
+                    'This is your inbox task. Edit or delete it.',
+                  ]);
+                  taskStmt.step();
+                  taskStmt.reset();
+                  taskStmt.bind([
+                    'plan',
+                    'work',
+                    'Plan project',
+                    'Create milestones and schedule user interviews.',
+                  ]);
+                  taskStmt.step();
+                  taskStmt.reset();
+                  taskStmt.free();
                 }
               }
             } catch (e) {
-              console.warn('Seeding skipped or failed (sql.js in-memory):', (e as any)?.message ?? String(e));
+              console.warn(
+                'Seeding skipped or failed (sql.js in-memory):',
+                (e as any)?.message ?? String(e)
+              );
             }
 
             // Persist the in-memory DB to disk so subsequent processes can load it
             try {
               const data = conn.export();
               // ensure directory exists
-              if (!fs.existsSync(path.dirname(dbPath))) fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+              if (!fs.existsSync(path.dirname(dbPath)))
+                fs.mkdirSync(path.dirname(dbPath), { recursive: true });
               fs.writeFileSync(dbPath, Buffer.from(data));
               console.info('Persisted sql.js database to', dbPath);
             } catch (e) {
-              console.warn('Failed to persist sql.js DB to disk:', (e as any)?.message ?? String(e));
+              console.warn(
+                'Failed to persist sql.js DB to disk:',
+                (e as any)?.message ?? String(e)
+              );
             }
           } catch (e) {
-            console.warn('Failed to apply migrations to sql.js in-memory DB:', (e as any)?.message ?? String(e));
+            console.warn(
+              'Failed to apply migrations to sql.js in-memory DB:',
+              (e as any)?.message ?? String(e)
+            );
           }
         }
         // Expose raw sql.js connection for existing fallbacks in services
@@ -111,7 +161,9 @@ try {
         (globalThis as any)[warnedKey] = true;
       } catch (e) {
         console.warn('sql.js fallback not available or failed to initialize:', e);
-        console.warn('If you want to run without `better-sqlite3`, install `sql.js` or run the dev server with Node and ensure native sqlite3 bindings are present.');
+        console.warn(
+          'If you want to run without `better-sqlite3`, install `sql.js` or run the dev server with Node and ensure native sqlite3 bindings are present.'
+        );
         (globalThis as any)[warnedKey] = true;
       }
     }
