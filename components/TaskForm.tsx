@@ -64,9 +64,10 @@ export default function TaskForm({
         </label>
         <input
           id="task-title"
+          data-task-input
           {...register('title')}
           className="flex-1 px-3 py-2 rounded bg-slate-800 placeholder:text-muted-foreground"
-          placeholder="Add a task"
+          placeholder="Add a task (⌘N)"
           required
         />
 

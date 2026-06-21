@@ -1,12 +1,15 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import Sidebar from './Sidebar';
 import ThemeToggle from './ThemeToggle';
+import { useKeyboardShortcuts } from '../lib/use-keyboard-shortcuts';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const sidebarOpenRef = useRef(sidebarOpen);
+  const router = useRouter();
 
   useEffect(() => {
     sidebarOpenRef.current = sidebarOpen;
@@ -20,6 +23,19 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
+
+  const focusFirstInput = useCallback(() => {
+    const input = document.querySelector<HTMLInputElement>('[data-task-input]');
+    input?.focus();
+  }, []);
+
+  useKeyboardShortcuts([
+    { key: 'n', meta: true, handler: focusFirstInput },
+    { key: 'g', meta: true, shift: true, handler: () => router.push('/app?view=all') },
+    { key: '1', meta: true, handler: () => router.push('/app') },
+    { key: '2', meta: true, handler: () => router.push('/app?view=next7') },
+    { key: '3', meta: true, handler: () => router.push('/app?view=upcoming') },
+  ]);
 
   return (
     <div className="min-h-screen">
@@ -45,7 +61,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        <ThemeToggle />
+        <div className="flex items-center gap-2">
+          <kbd className="hidden sm:inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2 py-1 text-[10px] font-mono text-foreground/50">
+            <span>⌘N</span>
+          </kbd>
+          <ThemeToggle />
+        </div>
       </header>
 
       <div className="max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
