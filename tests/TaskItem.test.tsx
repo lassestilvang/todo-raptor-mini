@@ -5,7 +5,7 @@ import TaskItem from '../components/TaskItem';
 
 describe('TaskItem', () => {
   it('renders title and notes', () => {
-    const task = { title: 'Hello', notes: 'World', dueDate: null };
+    const task = { title: 'Hello', notes: 'World', dueDate: null, id: `${Date.now()}` };
     const { getByText } = render(<TaskItem task={task} />);
     expect(getByText('Hello')).toBeTruthy();
     expect(getByText('World')).toBeTruthy();
