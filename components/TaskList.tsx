@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import React, { useDeferredValue, useEffect, useMemo, useState, useCallback } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import type { Task } from '../lib/types';
 import TaskItem from './TaskItem';
 import TaskForm from './TaskForm';
@@ -27,33 +28,36 @@ export default function TaskList({ listId }: { listId?: string }) {
 
   const deferredQuery = useDeferredValue(query);
 
-  async function fetchTasks(signal?: AbortSignal) {
-    setLoading(true);
-    setError(null);
-    const queryParam = listId ? `?listId=${encodeURIComponent(listId)}` : '';
+  const fetchTasks = useCallback(
+    async (signal?: AbortSignal) => {
+      setLoading(true);
+      setError(null);
+      const queryParam = listId ? `?listId=${encodeURIComponent(listId)}` : '';
 
-    try {
-      const res = await fetch(`/api/tasks${queryParam}`, { signal });
-      if (!res.ok) {
-        const body = await res.json();
-        throw new Error(body.error || 'Unable to load tasks');
+      try {
+        const res = await fetch(`/api/tasks${queryParam}`, { signal });
+        if (!res.ok) {
+          const body = await res.json();
+          throw new Error(body.error || 'Unable to load tasks');
+        }
+        const data = await res.json();
+        setTasks(data.tasks || []);
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          setError(err.message || 'Unable to load tasks');
+        }
+      } finally {
+        setLoading(false);
       }
-      const data = await res.json();
-      setTasks(data.tasks || []);
-    } catch (err: any) {
-      if (err.name !== 'AbortError') {
-        setError(err.message || 'Unable to load tasks');
-      }
-    } finally {
-      setLoading(false);
-    }
-  }
+    },
+    [listId]
+  );
 
   useEffect(() => {
     const controller = new AbortController();
     void fetchTasks(controller.signal);
     return () => controller.abort();
-  }, [listId]);
+  }, [fetchTasks]);
 
   useEffect(() => {
     const handler = window.setTimeout(() => setQuery(search), 150);
@@ -82,8 +86,8 @@ export default function TaskList({ listId }: { listId?: string }) {
             {loading
               ? 'Loading tasks…'
               : filtered.length === 0
-              ? 'No tasks yet — your day is clear!'
-              : `Showing ${filtered.length} task${filtered.length === 1 ? '' : 's'}`}
+                ? 'No tasks yet — your day is clear!'
+                : `Showing ${filtered.length} task${filtered.length === 1 ? '' : 's'}`}
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -96,36 +100,45 @@ export default function TaskList({ listId }: { listId?: string }) {
       </section>
 
       {error ? (
-        <div className="rounded-3xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-100">
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-3xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-100"
+        >
           {error}
-        </div>
+        </motion.div>
       ) : null}
 
       <section className="space-y-3">
-        {loading ? (
+        {loading && tasks.length === 0 ? (
           <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, index) => (
-              <div
-                key={index}
-                className="h-24 rounded-3xl bg-slate-800/70 animate-pulse"
-              />
+              <div key={index} className="h-24 rounded-3xl bg-slate-800/70 animate-pulse" />
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="rounded-2xl border border-border bg-card px-6 py-10 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-indigo-500/10 text-indigo-400 animate-pulse">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="rounded-2xl border border-border bg-card px-6 py-10 text-center"
+          >
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-indigo-500/10 text-indigo-400">
               <span className="text-2xl">🦖</span>
             </div>
             <h3 className="mt-4 text-lg font-semibold text-foreground">No tasks yet</h3>
             <p className="mt-2 text-sm text-foreground/70">
-              Add a task to start tracking your day.
+              {deferredQuery
+                ? 'No tasks match your search.'
+                : 'Add a task above to start tracking your day.'}
             </p>
-          </div>
+          </motion.div>
         ) : (
           <div className="space-y-3">
-            {filtered.map((t: any) => (
-              <TaskItem key={t.id} task={t} onUpdate={fetchTasks} />
-            ))}
+            <AnimatePresence mode="popLayout">
+              {filtered.map((t) => (
+                <TaskItem key={t.id} task={t} onUpdate={fetchTasks} />
+              ))}
+            </AnimatePresence>
           </div>
         )}
       </section>
