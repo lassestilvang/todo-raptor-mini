@@ -38,7 +38,12 @@ export async function getLabels() {
   const _db = getDb();
   if (!_db) return [];
   const rows = await _db.select().from(labels).all();
-  return rows.map((r) => ({ id: r.id, name: r.name, color: r.color, icon: r.icon }));
+  return rows.map((r: { id: string; name: string; color: string | null; icon: string | null }) => ({
+    id: r.id,
+    name: r.name,
+    color: r.color,
+    icon: r.icon,
+  }));
 }
 
 export async function getLabelById(id: string) {
