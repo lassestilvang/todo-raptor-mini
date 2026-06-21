@@ -49,7 +49,14 @@ export async function getLists() {
   const _db = getDb();
   if (!_db) return [];
   const rows = await _db.select().from(lists).all();
-  return rows.map((r) => ({ id: r.id, title: r.title, color: r.color, emoji: r.emoji }));
+  return rows.map(
+    (r: { id: string; title: string; color: string | null; emoji: string | null }) => ({
+      id: r.id,
+      title: r.title,
+      color: r.color,
+      emoji: r.emoji,
+    })
+  );
 }
 
 export async function getListById(id: string) {
