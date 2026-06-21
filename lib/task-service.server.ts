@@ -5,7 +5,27 @@ import { tasks, task_labels, labels } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { logActivity } from './activity-service.server';
 import { safeQuery, getPreparedOne } from './sqljs-utils.server';
-import type { SqlJsConn } from './sqljs-utils.server';
+import type { SqlJsConn, RowObject } from './sqljs-utils.server';
+
+type TaskRow = {
+  id: string;
+  list_id: string;
+  title: string;
+  notes: string;
+  status: string;
+  priority: number;
+  due_date: string | null;
+  estimate_minutes: number;
+  actual_minutes: number;
+  recurrence: string | null;
+  created_at: string;
+  updated_at: string;
+  completed_at: string | null;
+};
+
+function toTaskRow(r: RowObject): TaskRow {
+  return r as unknown as TaskRow;
+}
 
 // Helper to map priority numeric value back to string
 function mapPriorityValue(value: number): 'high' | 'medium' | 'low' | 'none' {
@@ -234,21 +254,24 @@ export async function getTasks(listId?: string): Promise<Task[]> {
         : 'SELECT id,list_id,title,notes,status,priority,due_date,estimate_minutes,actual_minutes,recurrence,created_at,updated_at,completed_at FROM tasks LIMIT 100';
       const raw = listId ? safeQuery(conn, sql, [listId]) : safeQuery(conn, sql);
       const tasksWithLabels = await Promise.all(
-        raw.map(async (r: any) => ({
-          id: r.id,
-          listId: r.list_id,
-          title: r.title,
-          notes: r.notes,
-          dueDate: r.due_date,
-          estimateMinutes: r.estimate_minutes,
-          actualMinutes: r.actual_minutes,
-          recurrence: safeParse(r.recurrence),
-          createdAt: r.created_at,
-          updatedAt: r.updated_at,
-          completedAt: r.completed_at,
-          priority: mapPriorityValue(r.priority),
-          labels: await getTaskLabelNames(r.id),
-        }))
+        raw.map(async (row: RowObject) => {
+          const r = toTaskRow(row);
+          return {
+            id: r.id,
+            listId: r.list_id,
+            title: r.title,
+            notes: r.notes,
+            dueDate: r.due_date,
+            estimateMinutes: r.estimate_minutes,
+            actualMinutes: r.actual_minutes,
+            recurrence: safeParse(r.recurrence),
+            createdAt: r.created_at,
+            updatedAt: r.updated_at,
+            completedAt: r.completed_at,
+            priority: mapPriorityValue(r.priority),
+            labels: await getTaskLabelNames(r.id),
+          };
+        })
       );
       return tasksWithLabels;
     } catch (e) {
@@ -289,8 +312,9 @@ export async function getTaskById(id: string): Promise<Task | null> {
       // Use prepared statement to prevent SQL injection
       const sql =
         'SELECT id,list_id,title,notes,status,priority,due_date,estimate_minutes,actual_minutes,recurrence,created_at,updated_at,completed_at FROM tasks WHERE id = ? LIMIT 1';
-      const r = getPreparedOne(conn, sql, [id]);
-      if (!r) return null;
+      const row = getPreparedOne(conn, sql, [id]);
+      if (!row) return null;
+      const r = toTaskRow(row);
       return {
         id: r.id,
         listId: r.list_id,
