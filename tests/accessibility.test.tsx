@@ -6,7 +6,7 @@ import ThemeToggle from '../components/ThemeToggle';
 describe('accessibility', () => {
   it('task form has input and submit button', () => {
     const { getAllByPlaceholderText, getAllByText } = render(<TaskForm />);
-    const inputs = getAllByPlaceholderText('Add a task');
+    const inputs = getAllByPlaceholderText(/Add a task/);
     expect(inputs.length).toBeGreaterThan(0);
     const buttons = getAllByText('Add');
     expect(buttons.length).toBeGreaterThan(0);

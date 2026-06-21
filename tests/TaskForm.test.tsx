@@ -7,7 +7,7 @@ describe('TaskForm', () => {
   it('renders and submits', async () => {
     const onCreate = async () => {};
     const { getAllByPlaceholderText, getAllByText } = render(<TaskForm onCreate={onCreate} />);
-    const inputs = getAllByPlaceholderText('Add a task');
+    const inputs = getAllByPlaceholderText(/Add a task/);
     expect(inputs.length).toBeGreaterThan(0);
     const buttons = getAllByText('Add');
     expect(buttons.length).toBeGreaterThan(0);

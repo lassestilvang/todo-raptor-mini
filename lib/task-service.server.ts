@@ -5,6 +5,7 @@ import { tasks, task_labels, labels } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { logActivity } from './activity-service.server';
 import { safeQuery, getPreparedOne } from './sqljs-utils.server';
+import type { SqlJsConn } from './sqljs-utils.server';
 
 // Helper to map priority numeric value back to string
 function mapPriorityValue(value: number): 'high' | 'medium' | 'low' | 'none' {
@@ -33,7 +34,7 @@ function safeParse<T = any>(s: string | null | undefined): T | null {
 async function createTaskLabels(taskId: string, labelIds: string[]) {
   if (!labelIds.length) return;
   // @ts-ignore - runtime global
-  const conn: any = globalThis.__SQL_JS_CONN__ || null;
+  const conn = (globalThis as Record<string, unknown>).__SQL_JS_CONN__ as SqlJsConn | undefined;
   if (conn) {
     const stmt = conn.prepare('INSERT INTO task_labels (task_id, label_id) VALUES (?, ?)');
     try {
@@ -57,9 +58,9 @@ async function createTaskLabels(taskId: string, labelIds: string[]) {
     throw new Error('Database not initialized');
   }
 
-  const insertQuery: any = _db.insert(task_labels).values(
-    labelIds.map((labelId) => ({ task_id: taskId, label_id: labelId }))
-  );
+  const insertQuery: any = _db
+    .insert(task_labels)
+    .values(labelIds.map((labelId) => ({ task_id: taskId, label_id: labelId })));
   if (insertQuery && typeof insertQuery.run === 'function') {
     await insertQuery.run();
   } else {
@@ -69,7 +70,7 @@ async function createTaskLabels(taskId: string, labelIds: string[]) {
 
 async function deleteTaskLabels(taskId: string) {
   // @ts-ignore - runtime global
-  const conn: any = globalThis.__SQL_JS_CONN__ || null;
+  const conn = (globalThis as Record<string, unknown>).__SQL_JS_CONN__ as SqlJsConn | undefined;
   if (conn) {
     const stmt = conn.prepare('DELETE FROM task_labels WHERE task_id = ?');
     try {
@@ -94,7 +95,7 @@ async function deleteTaskLabels(taskId: string) {
 
 async function getTaskLabelNames(taskId: string): Promise<string[]> {
   // @ts-ignore - runtime global
-  const conn: any = globalThis.__SQL_JS_CONN__ || null;
+  const conn = (globalThis as Record<string, unknown>).__SQL_JS_CONN__ as SqlJsConn | undefined;
   if (conn) {
     const rows = safeQuery(
       conn,
@@ -148,7 +149,7 @@ export async function createTask(payload: Partial<Task>): Promise<Task> {
 
   // If SQL.js raw conn available, insert using raw SQL for compatibility
   // @ts-ignore - runtime global
-  const conn: any = (globalThis as any).__SQL_JS_CONN__ || null;
+  const conn = (globalThis as Record<string, unknown>).__SQL_JS_CONN__ as SqlJsConn | undefined;
   if (conn) {
     // Use prepared statement to prevent SQL injection
     const stmt = conn.prepare(
@@ -225,7 +226,7 @@ export async function createTask(payload: Partial<Task>): Promise<Task> {
 
 export async function getTasks(listId?: string): Promise<Task[]> {
   // @ts-ignore - runtime global
-  const conn: any = globalThis.__SQL_JS_CONN__ || null;
+  const conn = (globalThis as Record<string, unknown>).__SQL_JS_CONN__ as SqlJsConn | undefined;
   if (conn) {
     try {
       const sql = listId
@@ -282,11 +283,12 @@ export async function getTasks(listId?: string): Promise<Task[]> {
 
 export async function getTaskById(id: string): Promise<Task | null> {
   // @ts-ignore - runtime global
-  const conn: any = globalThis.__SQL_JS_CONN__ || null;
+  const conn = (globalThis as Record<string, unknown>).__SQL_JS_CONN__ as SqlJsConn | undefined;
   if (conn) {
     try {
       // Use prepared statement to prevent SQL injection
-      const sql = 'SELECT id,list_id,title,notes,status,priority,due_date,estimate_minutes,actual_minutes,recurrence,created_at,updated_at,completed_at FROM tasks WHERE id = ? LIMIT 1';
+      const sql =
+        'SELECT id,list_id,title,notes,status,priority,due_date,estimate_minutes,actual_minutes,recurrence,created_at,updated_at,completed_at FROM tasks WHERE id = ? LIMIT 1';
       const r = getPreparedOne(conn, sql, [id]);
       if (!r) return null;
       return {
@@ -344,10 +346,10 @@ export async function updateTask(id: string, patch: Partial<Task>): Promise<Task
       patch.priority === 'high'
         ? 2
         : patch.priority === 'medium'
-        ? 1
-        : patch.priority === 'low'
-        ? -1
-        : 0;
+          ? 1
+          : patch.priority === 'low'
+            ? -1
+            : 0;
   }
   if (patch.estimateMinutes !== undefined) updates.estimate_minutes = patch.estimateMinutes;
   if (patch.actualMinutes !== undefined) updates.actual_minutes = patch.actualMinutes;

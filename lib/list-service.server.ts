@@ -2,7 +2,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDb } from './db';
 import { lists } from '../db/schema';
 import { eq } from 'drizzle-orm';
-import { runPrepared } from './sqljs-utils.server';
+import { getPreparedOne, runPrepared } from './sqljs-utils.server';
+import type { SqlJsConn } from './sqljs-utils.server';
 
 export async function createList(payload: { title: string; color?: string; emoji?: string }) {
   const id = uuidv4();
@@ -15,8 +16,7 @@ export async function createList(payload: { title: string; color?: string; emoji
     created_at: now,
     updated_at: now,
   };
-  // @ts-ignore - runtime global
-  const conn: any = globalThis.__SQL_JS_CONN__ || null;
+  const conn = (globalThis as Record<string, unknown>).__SQL_JS_CONN__ as SqlJsConn | undefined;
   if (conn) {
     runPrepared(
       conn,
@@ -41,8 +41,7 @@ export async function createList(payload: { title: string; color?: string; emoji
 }
 
 export async function getLists() {
-  // @ts-ignore - runtime global
-  const conn: any = globalThis.__SQL_JS_CONN__ || null;
+  const conn = (globalThis as Record<string, unknown>).__SQL_JS_CONN__ as SqlJsConn | undefined;
   if (conn) {
     return runPrepared(conn, 'SELECT id,title,color,emoji FROM lists');
   }
@@ -54,8 +53,7 @@ export async function getLists() {
 }
 
 export async function getListById(id: string) {
-  // @ts-ignore - runtime global
-  const conn: any = globalThis.__SQL_JS_CONN__ || null;
+  const conn = (globalThis as Record<string, unknown>).__SQL_JS_CONN__ as SqlJsConn | undefined;
   if (conn) {
     const row = getPreparedOne(
       conn,

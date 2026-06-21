@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDb } from './db';
 import { activity_log } from '../db/schema';
 import { runPrepared, safeQuery } from './sqljs-utils.server';
+import type { SqlJsConn } from './sqljs-utils.server';
 
 export async function logActivity(
   entityType: string,
@@ -22,7 +23,7 @@ export async function logActivity(
     created_at: now,
   };
   // @ts-ignore - runtime global
-  const conn: any = (globalThis as any).__SQL_JS_CONN__ || null;
+  const conn = (globalThis as Record<string, unknown>).__SQL_JS_CONN__ as SqlJsConn | undefined;
   if (conn) {
     runPrepared(
       conn,
@@ -64,9 +65,7 @@ export async function getActivityForEntity(entityType: string, entityId: string)
       createdAt: r.created_at,
     }));
   } catch (e) {
-    // SQL.js fallback via centralized helper
-    // @ts-ignore - runtime global
-    const conn: any = (globalThis as any).__SQL_JS_CONN__ || null;
+    const conn = (globalThis as Record<string, unknown>).__SQL_JS_CONN__ as SqlJsConn | undefined;
     if (!conn) throw e;
     try {
       const rows = safeQuery(

@@ -1,4 +1,4 @@
-type SqlJsStmt = {
+export type SqlJsStmt = {
   bind: (params: unknown[]) => void;
   step: () => boolean;
   get: () => unknown[];
@@ -6,7 +6,7 @@ type SqlJsStmt = {
   free: () => void;
 };
 
-type SqlJsConn = {
+export type SqlJsConn = {
   prepare: (sql: string) => SqlJsStmt;
   exec: (sql: string) => { columns: string[]; values: unknown[][] }[];
 };

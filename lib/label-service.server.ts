@@ -3,12 +3,12 @@ import { getDb } from './db';
 import { labels } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { getPreparedOne, runPrepared } from './sqljs-utils.server';
+import type { SqlJsConn } from './sqljs-utils.server';
 
 export async function createLabel(payload: { name: string; color?: string; icon?: string }) {
   const id = uuidv4();
   const row = { id, name: payload.name, color: payload.color ?? null, icon: payload.icon ?? null };
-  // @ts-ignore - runtime global
-  const conn: any = globalThis.__SQL_JS_CONN__ || null;
+  const conn = (globalThis as Record<string, unknown>).__SQL_JS_CONN__ as SqlJsConn | undefined;
   if (conn) {
     runPrepared(conn, `INSERT INTO labels (id, name, color, icon) VALUES (?, ?, ?, ?)`, [
       id,
@@ -30,8 +30,7 @@ export async function createLabel(payload: { name: string; color?: string; icon?
 }
 
 export async function getLabels() {
-  // @ts-ignore - runtime global
-  const conn: any = globalThis.__SQL_JS_CONN__ || null;
+  const conn = (globalThis as Record<string, unknown>).__SQL_JS_CONN__ as SqlJsConn | undefined;
   if (conn) {
     return runPrepared(conn, 'SELECT id,name,color,icon FROM labels');
   }
@@ -43,8 +42,7 @@ export async function getLabels() {
 }
 
 export async function getLabelById(id: string) {
-  // @ts-ignore - runtime global
-  const conn: any = globalThis.__SQL_JS_CONN__ || null;
+  const conn = (globalThis as Record<string, unknown>).__SQL_JS_CONN__ as SqlJsConn | undefined;
   if (conn) {
     const row = getPreparedOne(conn, 'SELECT id,name,color,icon FROM labels WHERE id = ? LIMIT 1', [
       id,
