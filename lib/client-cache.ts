@@ -11,15 +11,13 @@ interface ResourceTypeMap {
   stats: { overdueCount: number };
 }
 
-type Snapshot = unknown;
-
-const defaultSnapshots: Record<ResourceKey, unknown> = {
+const defaultSnapshots: ResourceTypeMap = {
   lists: [],
   labels: [],
   stats: { overdueCount: 0 },
 };
 
-const cache = new Map<ResourceKey, Snapshot>();
+const cache = new Map<ResourceKey, List[] | Label[] | { overdueCount: number }>();
 const listeners = new Map<ResourceKey, Set<() => void>>();
 
 function getListeners(key: ResourceKey) {
@@ -52,12 +50,12 @@ export function useCachedResource<K extends ResourceKey>(key: K): ResourceTypeMa
     return () => set.delete(callback);
   };
 
-  const getSnapshot = () => {
+  const getSnapshot = (): ResourceTypeMap[K] => {
     if (!cache.has(key)) {
       void fetchResource(key);
     }
     return (cache.get(key) ?? defaultSnapshots[key]) as ResourceTypeMap[K];
   };
 
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot) as ResourceTypeMap[K];
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }

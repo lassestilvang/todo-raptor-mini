@@ -33,11 +33,9 @@ export default async function ListPage({ params }: Props) {
         <span className="text-3xl">{list.emoji ?? '📋'}</span>
         <div>
           <h1 className="text-2xl font-semibold">{list.title}</h1>
-          <p className="text-sm text-foreground/70">List ID: {list.id}</p>
         </div>
       </div>
       <TaskList listId={listId} />
     </div>
   );
 }
-
