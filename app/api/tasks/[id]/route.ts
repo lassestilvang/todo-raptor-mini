@@ -13,7 +13,10 @@ const patchSchema = z.object({
   labels: z.array(z.string()).optional(),
 });
 
-export async function GET(req: Request, { params }: { params: any }) {
+export async function GET(
+  req: Request,
+  { params }: { params: Record<string, string> | Promise<Record<string, string>> }
+) {
   const { id } = await resolveParams(params);
 
   if (!id) {
@@ -30,7 +33,10 @@ export async function GET(req: Request, { params }: { params: any }) {
   return NextResponse.json({ task });
 }
 
-export async function PATCH(req: Request, { params }: { params: any }) {
+export async function PATCH(
+  req: Request,
+  { params }: { params: Record<string, string> | Promise<Record<string, string>> }
+) {
   const { id } = await resolveParams(params);
 
   if (!id) {

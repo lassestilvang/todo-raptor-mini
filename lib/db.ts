@@ -1,17 +1,18 @@
 import { drizzle } from 'drizzle-orm/better-sqlite3';
+import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import path from 'path';
+import type * as schema from '../db/schema';
 
-let _db: any = null;
+let _db: BetterSQLite3Database<typeof schema> | null = null;
 
-export function initDb(connection?: string | any) {
+type DatabaseInstance = ReturnType<typeof import('better-sqlite3')>;
+
+export function initDb(connection?: string | DatabaseInstance) {
   if (typeof connection === 'string' || connection === undefined) {
     const dbPath =
-      (connection as string) ||
-      process.env.DATABASE_URL ||
-      path.join(process.cwd(), 'db', 'data.db');
-    let Database: any;
+      connection || process.env.DATABASE_URL || path.join(process.cwd(), 'db', 'data.db');
+    let Database: { new (path: string): DatabaseInstance };
     try {
-      // require inside function to avoid loading native bindings at module import time
       Database = require('better-sqlite3');
     } catch (e) {
       throw e;
@@ -19,8 +20,7 @@ export function initDb(connection?: string | any) {
     const conn = new Database(dbPath);
     _db = drizzle(conn);
   } else {
-    // connection is a Database instance
-    _db = drizzle(connection as any);
+    _db = drizzle(connection);
   }
   return _db;
 }
@@ -182,8 +182,7 @@ export function getDb() {
   return _db;
 }
 
-// Allow tests (or other environments) to directly set the underlying drizzle instance
-export function setDb(dbInstance: any) {
+export function setDb(dbInstance: BetterSQLite3Database<typeof schema> | null) {
   _db = dbInstance;
 }
 
