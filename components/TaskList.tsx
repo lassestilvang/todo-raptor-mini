@@ -159,7 +159,7 @@ export default function TaskList({ listId, view }: { listId?: string; view?: str
         ) : (
           <div className="space-y-3">
             <AnimatePresence mode="popLayout">
-              {filtered.map((t) => (
+              {filtered.map((t: Task) => (
                 <TaskItem key={t.id} task={t} onUpdate={fetchTasks} />
               ))}
             </AnimatePresence>
