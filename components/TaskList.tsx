@@ -19,7 +19,7 @@ function getFuse() {
   }
 }
 
-export default function TaskList({ listId }: { listId?: string }) {
+export default function TaskList({ listId, view }: { listId?: string; view?: string }) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
@@ -64,18 +64,42 @@ export default function TaskList({ listId }: { listId?: string }) {
     return () => window.clearTimeout(handler);
   }, [search]);
 
+  const viewFiltered = useMemo(() => {
+    if (!view || view === 'all') return tasks;
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayEnd = new Date(todayStart.getTime() + 86400000);
+    const next7End = new Date(todayStart.getTime() + 7 * 86400000);
+
+    return tasks.filter((t) => {
+      if (!t.dueDate) return false;
+      const due = new Date(t.dueDate);
+      switch (view) {
+        case 'today':
+          return due >= todayStart && due < todayEnd;
+        case 'next7':
+          return due >= todayStart && due < next7End;
+        case 'upcoming':
+          return due >= todayStart;
+        default:
+          return true;
+      }
+    });
+  }, [tasks, view]);
+
   const filtered = useMemo(() => {
-    if (!deferredQuery) return tasks;
+    const source = view ? viewFiltered : tasks;
+    if (!deferredQuery) return source;
     try {
       const Fuse = getFuse();
       if (!Fuse) throw new Error('Fuse unavailable');
-      const fuse = new Fuse(tasks, { keys: ['title', 'notes'], threshold: 0.3 });
+      const fuse = new Fuse(source, { keys: ['title', 'notes'], threshold: 0.3 });
       return fuse.search(deferredQuery).map((r: any) => r.item);
     } catch (_err) {
       void _err;
-      return tasks.filter((t) => t.title.toLowerCase().includes(deferredQuery.toLowerCase()));
+      return source.filter((t) => t.title.toLowerCase().includes(deferredQuery.toLowerCase()));
     }
-  }, [tasks, deferredQuery]);
+  }, [tasks, viewFiltered, view, deferredQuery]);
 
   return (
     <div className="space-y-5">
