@@ -3,6 +3,7 @@ export type SqlJsStmt = {
   step: () => boolean;
   get: () => unknown[];
   columns: string[];
+  reset: () => void;
   free: () => void;
 };
 
